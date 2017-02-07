@@ -11,7 +11,8 @@ use rustwlc::types::{Point, Size};
 use super::*;
 
 use wmstate::*;
-use super::window::*;
+use super::element::*;
+use super::element::window::*;
 use definitions::{LayoutElemID};
 
 

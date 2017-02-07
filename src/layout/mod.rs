@@ -1,7 +1,5 @@
-pub mod workspace;
-pub mod window;
 pub mod arrangement;
-pub mod segmentation;
+pub mod element;
 pub mod rules;
 
 use std::cmp;
@@ -16,35 +14,13 @@ use rustwlc::handle::*;
 use rustwlc::types::*;
 use wmstate::*;
 use definitions::{LayoutElemID};
-use layout::segmentation::*;
+use layout::element::LayoutElement;
+use layout::element::segmentation::*;
+use layout::element::workspace::*;
+use layout::element::segmentation::*;
+use layout::element::window::*;
+
 use layout::rules::*;
-
-pub enum LayoutElement
-{
-    // Unallocated space in the layout
-    None,
-
-    // A reactive container with exactly one child element that can be turned on or off
-    Workspace(workspace::Workspace),
-
-    // A segmentation of multiple child elements
-    Segm(segmentation::Segmentation),
-    
-    // 
-    Window(window::Window)
-}
-
-
-impl fmt::Debug for LayoutElement{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match self {
-            &LayoutElement::None => "",
-            &LayoutElement::Workspace(ref workspace) => "Workspace",
-            &LayoutElement::Segm(ref segmentation) => "Segmentation",
-            &LayoutElement::Window(ref window) => "Title [geometry]"
-        })
-    }
-}
 
 pub const PARENT_ELEMENT: LayoutElemID = 0;
 

@@ -8,7 +8,7 @@ use rustwlc::*;
 use handlers::input::InputDevice;
 
 use layout::*;
-use layout::workspace::Workspace;
+use layout::element::workspace::Workspace;
 use layout::arrangement::*;
 use layout::rules::*;
 

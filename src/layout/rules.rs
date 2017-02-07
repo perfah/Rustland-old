@@ -2,6 +2,7 @@ use std::sync::MutexGuard;
 
 use super::*;
 use super::arrangement::*;
+use super::element::*;
 
 pub trait RuleSet{
     fn dock_window(&self, tree: &mut LayoutTree) -> LayoutElemID;
@@ -35,7 +36,7 @@ impl RuleSet for Circulation{
             println!("NOTICE: Extending the layout structure!");
 
             let last_id = tree.last_window_id();
-            let extension = super::segmentation::Segmentation::init_vert_50_50(tree);
+            let extension = Segmentation::init_vert_50_50(tree);
             let preoccupied_id = extension.get_children()[0];
             let unoccupied_id = extension.get_children()[1];
 

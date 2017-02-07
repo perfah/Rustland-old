@@ -14,10 +14,10 @@ use rustwlc::callback;
 
 use wmstate::*;
 use definitions::{WM_CATCH_EVENT};
-use super::arrangement::*;
-use super::rules::*;
-use layout::LayoutElement;
-
+use layout::*;
+use layout::arrangement::*;
+use layout::rules::*;
+use super::LayoutElement;
 
 pub struct Window {
     view: Option<WlcView>,
@@ -145,7 +145,7 @@ pub extern fn on_view_created(view: WlcView) -> bool {
     }
 
     let window_id = 
-        if let Some(unoccupied_id) = find_first_empty_element(&wm_state.tree, super::PARENT_ELEMENT)
+        if let Some(unoccupied_id) = find_first_empty_element(&wm_state.tree, PARENT_ELEMENT)
         {
             unoccupied_id
         }

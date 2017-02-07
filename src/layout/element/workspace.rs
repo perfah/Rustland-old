@@ -5,13 +5,11 @@ use std::collections::HashMap;
 use rustwlc::*;
 
 use wmstate::*;
-use layout::segmentation::*;
-use layout::LayoutElement;
-
-use super::arrangement::*;
-use super::*;
-
-
+use definitions::LayoutElemID;
+use layout::*;
+use layout::element::segmentation::*;
+use super::LayoutElement;
+use layout::arrangement::*;
 
 pub struct Workspace{
     active: bool,

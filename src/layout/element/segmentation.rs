@@ -4,8 +4,9 @@ use std::sync::MutexGuard;
 pub use rustwlc::types::{Geometry, Point, Size};
 
 use wmstate::*;
+use layout::*;
 use definitions::{LayoutElemID};
-use super::arrangement::*;
+use layout::arrangement::*;
 
 use super::*;
 

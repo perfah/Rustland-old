@@ -28,11 +28,11 @@ use layout::arrangement::*;
 
 fn main() {
     callback::compositor_ready(compositor_ready);
-    callback::view_created(layout::window::on_view_created);
-    callback::view_destroyed(layout::window::on_view_destroyed);
-    callback::view_focus(layout::window::on_view_focus);
-    callback::view_request_move(layout::window::on_view_request_move);
-    callback::view_request_resize(layout::window::on_view_request_resize);
+    callback::view_created(layout::element::window::on_view_created);
+    callback::view_destroyed(layout::element::window::on_view_destroyed);
+    callback::view_focus(layout::element::window::on_view_focus);
+    callback::view_request_move(layout::element::window::on_view_request_move);
+    callback::view_request_resize(layout::element::window::on_view_request_resize);
     callback::output_resolution(layout::on_output_resolution);
 
     // The default log handler will print wlc logs to stdout
