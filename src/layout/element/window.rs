@@ -153,18 +153,22 @@ pub extern fn on_view_created(view: WlcView) -> bool {
         {
             println!("NOTICE: Extending the layout structure!");
 
-            let last_id = wm_state.tree.last_window_id();
-            let extension = super::segmentation::Segmentation::init_horiz_50_50(&mut wm_state.tree);
-            let preoccupied_id = extension.get_children()[0];
-            let unoccupied_id = extension.get_children()[1];
+            if let Some(last_id) = wm_state.tree.last_window_id(){
+                let extension = super::segmentation::Segmentation::init_horiz_50_50(&mut wm_state.tree);
+                let preoccupied_id = extension.get_children()[0];
+                let unoccupied_id = extension.get_children()[1];
 
-            if let Some(tmp) = wm_state.tree.swap_element(last_id, LayoutElement::Segm(extension))
-            {
-                wm_state.tree.swap_cell(preoccupied_id, tmp);
-                unoccupied_id
+                if let Some(tmp) = wm_state.tree.swap_element(last_id, LayoutElement::Segm(extension))
+                {
+                    wm_state.tree.swap_cell(preoccupied_id, tmp);
+                    unoccupied_id
+                }
+                else {
+                    panic!("Last index did not exist!");
+                }
             }
-            else {
-                panic!("Last index did not exist!");
+            else{
+                panic!("ERROR: No space in layout found!")
             }
         };
 

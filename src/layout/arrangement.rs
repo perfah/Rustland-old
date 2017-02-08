@@ -25,18 +25,25 @@ pub fn tree(wm_state: &MutexGuard<WMState>, outer_element_id: LayoutElemID)
     if let Some(outer_element) = wm_state.tree.lookup_element(outer_element_id){
         match *outer_element
         {
-            LayoutElement::Workspace(ref element) =>
-            {
-                println!("├── Workspace");
-                print!("   ");
-            },
             LayoutElement::Segm(ref element) =>
             {
-                println!("├──Segmentation ");
+                println!("├──[{}] Segmentation", outer_element_id);
 
                 for (i, child_id) in element.get_children().iter().enumerate()
                 {
-                    print!("   ");
+                    print!("    ");
+
+                    //Recursion
+                    tree(wm_state, *child_id);
+                }
+            },
+            LayoutElement::Workspace(ref element) =>
+            {
+                for (i, child_id) in element.get_all_children().iter().enumerate()
+                {
+                    println!("├──[{}] Workspace {}", child_id, i + 1);
+                    print!("    ");
+                    print!("    ");
 
                     //Recursion
                     tree(wm_state, *child_id);
@@ -44,7 +51,8 @@ pub fn tree(wm_state: &MutexGuard<WMState>, outer_element_id: LayoutElemID)
             },
             LayoutElement::Window(ref window) =>
             {
-                println!("├── Window: {} [{}]", 
+                println!("├──[{}] Window: {} [{}]", 
+                    outer_element_id,
                     if let Some(view) = window.get_view(){
                         view.get_class()
                     }
@@ -55,7 +63,7 @@ pub fn tree(wm_state: &MutexGuard<WMState>, outer_element_id: LayoutElemID)
                 );
             },
             LayoutElement::None => {
-                println!("├── Unoccupied");
+                println!("├──[{}] Unoccupied", outer_element_id);
             }
         }  
     }
@@ -68,13 +76,19 @@ pub fn find_first_empty_element(tree: &LayoutTree, outer_element_id: LayoutElemI
             LayoutElement::None => {
                 return Some(outer_element_id);
             },
+            LayoutElement::Workspace(ref wrkspc) => {
+                // Recursion
+                if let Some(candidate_id) = find_first_empty_element(tree, wrkspc.get_active_child_id()){
+                    return Some(candidate_id);
+                }
+            },
             LayoutElement::Segm(ref segm) =>{
                 for element_id in segm.get_children()
                 {
+                    // Recursion
                     if let Some(candidate_id) = find_first_empty_element(tree, *element_id){
                         return Some(candidate_id);
-                    }
-                    
+                    }   
                 }
             },
             _ => {}
@@ -94,6 +108,14 @@ pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry
                 {   
                     // Recursion
                     arrange(tree, *child_id, segm.get_offset(outer_geometry, i as i32));
+                }
+            },
+            &mut LayoutElement::Workspace(ref wrkspc) =>
+            {               
+                for (i, child_id) in wrkspc.get_all_children().iter().enumerate()
+                {   
+                    // Recursion
+                    arrange(tree, *child_id, wrkspc.get_offset(tree, outer_geometry, i as u16));
                 }
             },
             &mut LayoutElement::Window(ref mut window) =>

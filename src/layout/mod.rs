@@ -13,7 +13,7 @@ use std::rc::Rc;
 use rustwlc::handle::*;
 use rustwlc::types::*;
 use wmstate::*;
-use definitions::{LayoutElemID};
+use definitions::{LayoutElemID, MAX_WORKSPACES_LIMIT};
 use layout::element::LayoutElement;
 use layout::element::segmentation::*;
 use layout::element::workspace::*;
@@ -60,9 +60,16 @@ impl LayoutTree {
 
         //Place root 
         let parent_id = tree.spawn_element();
-        let parent_element = LayoutElement::Segm(Segmentation::init(&mut tree, no_monitors, Orientation::Horizontal));
-        tree.swap_element(parent_id, parent_element);
+        let parent_element = Segmentation::init(&mut tree, no_monitors, Orientation::Horizontal);
+        for child_id in parent_element.get_children(){
+            let workspace = Workspace::init(&mut tree, MAX_WORKSPACES_LIMIT);
+            tree.swap_element(*child_id, LayoutElement::Workspace(workspace));
+        }
         
+        tree.swap_element(parent_id, LayoutElement::Segm(parent_element));
+        
+
+
         tree
     }
 
@@ -141,25 +148,32 @@ impl LayoutTree {
         }
     }
 
-    pub fn last_window_id(&self) -> LayoutElemID{
+    pub fn last_window_id(&self) -> Option<LayoutElemID>{
         let mut i = self.active_id - 1;
-
+        
         while {
             if let Some(a) = self.elements.get(&i)
             {   
                 match *a.borrow(){
-                    LayoutElement::Window(ref window) => { false }
+                    LayoutElement::Window(ref window) => { return Some(i) }
                     _ => { true }
                 }
             }
             else {
-                panic!("Nothing found!!")
+                false
             }
         }{
-            i -= 1;
+            match i{
+                0 => { break; },
+                _ => { i -= 1; }
+            }
         };
 
-        i
+        None        
+    }
+
+    pub fn get_outer_geometry(&self) -> Geometry{
+        self.outer_geometry
     }
 
     pub fn get_rule_set(&self) -> &RefCell<Box<RuleSet>>{

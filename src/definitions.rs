@@ -1,5 +1,8 @@
-// A identifier type for elements of the layout
+// An identifier type for elements of the layout
 pub type LayoutElemID = u16;
+
+// The maximum number of available workspaces
+pub const MAX_WORKSPACES_LIMIT: usize = 4;
 
 // CALLBACK EVENT SIGNALS
 pub const WM_FORWARD_EVENT_TO_CLIENT: bool = false;

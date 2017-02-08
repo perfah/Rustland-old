@@ -9,11 +9,11 @@ pub enum LayoutElement
     // Unallocated space in the layout
     None,
 
-    // A reactive container with exactly one child element that can be turned on or off
-    Workspace(workspace::Workspace),
-
     // A segmentation of multiple child elements
     Segm(segmentation::Segmentation),
+
+    // A passthrough container with exactly one active child element at a time
+    Workspace(workspace::Workspace),
     
     // An application
     Window(window::Window)

@@ -25,18 +25,18 @@ pub struct Segmentation{
 
 
 impl Segmentation{
-    pub fn init(tree: &mut LayoutTree, partitions: u16, orientation: Orientation) -> Segmentation{
-        assert!(partitions > 0, "A segmentation is expected to contain at least 1 child element.");
+    pub fn init(tree: &mut LayoutTree, no_partitions: u16, orientation: Orientation) -> Segmentation{
+        assert!(no_partitions > 0, "A segmentation element is expected to contain at least 1 child element.");
         
         let mut children: Vec<LayoutElemID> = Vec::new();
-        for i in 0..partitions{
+        for i in 0..no_partitions{
             children.push(tree.spawn_element())
         }
 
         Segmentation{
             children: children,
             orientation: orientation,
-            ratio: 1.0 / partitions as f32
+            ratio: 1.0 / no_partitions as f32
         }
     }
     pub fn init_horiz_50_50(tree: &mut LayoutTree) -> Segmentation{
@@ -64,20 +64,20 @@ impl Segmentation{
         self.orientation
     }
 
-    pub fn get_offset(&self, outer_geometry: Geometry, index: i32) -> Geometry
+    pub fn get_offset(&self, outer_geometry: Geometry, child: i32) -> Geometry
     {
         Geometry{
             origin: match self.orientation{
                 Orientation::Horizontal => {  
                     Point{
-                        x: outer_geometry.origin.x + index * (self.ratio * outer_geometry.size.w as f32) as i32,
+                        x: outer_geometry.origin.x + child * (self.ratio * outer_geometry.size.w as f32) as i32,
                         y: 0i32
                     }
                 }
                 Orientation::Vertical => {
                     Point{
                         x: 0i32,
-                        y: outer_geometry.origin.y + index * (self.ratio * outer_geometry.size.h as f32) as i32,
+                        y: outer_geometry.origin.y + child * (self.ratio * outer_geometry.size.h as f32) as i32,
                     }
                 }
             },

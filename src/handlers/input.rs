@@ -4,6 +4,7 @@ extern crate rustwlc;
 
 use rustwlc::*;
 use rustwlc::xkb::keysyms;
+use rustwlc::xkb::Keysym;
 use rustwlc::types::{ButtonState, KeyboardModifiers, KeyState, KeyboardLed, ScrollAxis, Size,
                      Point, Geometry, ResizeEdge, ViewState, VIEW_ACTIVATED, VIEW_RESIZING,
                      MOD_NONE, MOD_CTRL, RESIZE_LEFT, RESIZE_RIGHT, RESIZE_TOP, RESIZE_BOTTOM};
@@ -13,6 +14,7 @@ use definitions::{WM_FORWARD_EVENT_TO_CLIENT, WM_CATCH_EVENT, LEFT_CLICK, RIGHT_
 
 use layout::arrangement::*;
 use layout::*;
+use layout::element::LayoutElement;
 
 pub struct InputDevice {
     pub mouse_location: Point,
@@ -136,11 +138,36 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
         //Press F5 to force an update to the arrangement
         if sym == keysyms::KEY_F5{
             wm_state.tree.arrange();
-            tree(&wm_state, PARENT_ELEMENT);
             return WM_CATCH_EVENT;
         }
 
         if mods.mods == MOD_CTRL {
+            if sym == keysyms::KEY_Left || sym == keysyms::KEY_Right {
+                use std::cmp;
+                use std::u16;
+
+                if let Some(mut element) = wm_state.tree.lookup_element(1) {
+                    match *element{
+                        LayoutElement::Workspace(ref mut wrkspc) => {
+                            match sym{
+                                keysyms::KEY_Left => {
+                                    wrkspc.active_child = cmp::max(wrkspc.active_child - 1, 1);
+                                    println!("Switched workspace to the left: {}", wrkspc.active_child);
+                                },
+                                keysyms::KEY_Right => {
+                                    wrkspc.active_child = cmp::min(wrkspc.active_child + 1, u16::MAX);
+                                    println!("Switched workspace to the right: {}", wrkspc.active_child);
+                                },
+                                _ => {}
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+
+                wm_state.tree.arrange();
+            }
+
             if sym == keysyms::KEY_c {
                 if !view.is_root() {
                     view.close();
