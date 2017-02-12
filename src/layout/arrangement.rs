@@ -19,51 +19,76 @@ use definitions::{LayoutElemID};
 /// Arrangemnet  
 /// Recursive methods for describing and interacting with the layout
 
-pub fn tree(wm_state: &MutexGuard<WMState>, outer_element_id: LayoutElemID)
+pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutElemID, indentation_whtspcs: &mut i32)
 {
+    let indent = |whtspcs, f: &mut fmt::Formatter| {
+        for i in 0..whtspcs * 4{
+            write!(f, " ");
+        }
+    };
+
     // Use debug for LayoutElement
-    if let Some(outer_element) = wm_state.tree.lookup_element(outer_element_id){
+    if let Some(outer_element) = tree.lookup_element(outer_element_id){
         match *outer_element
         {
             LayoutElement::Segm(ref element) =>
             {
-                println!("├──[{}] Segmentation", outer_element_id);
+                indent(*indentation_whtspcs, f);
+                writeln!(f, "├──[{}] Segmentation", outer_element_id);
 
+                *indentation_whtspcs += 1;
                 for (i, child_id) in element.get_children().iter().enumerate()
-                {
-                    print!("    ");
-
+                {;
                     //Recursion
-                    tree(wm_state, *child_id);
+                    arrangement::tree(tree, f, *child_id, indentation_whtspcs);
                 }
+                *indentation_whtspcs -= 1;
             },
             LayoutElement::Workspace(ref element) =>
             {
+               
                 for (i, child_id) in element.get_all_children().iter().enumerate()
                 {
-                    println!("├──[{}] Workspace {}", child_id, i + 1);
-                    print!("    ");
-                    print!("    ");
+                    indent(*indentation_whtspcs, f);
 
-                    //Recursion
-                    tree(wm_state, *child_id);
+                    if *child_id == element.get_active_child_id(){
+                        println!("├──[{}] Workspace [{}]", outer_element_id, i);
+                    }
+                    else{
+                        println!("├──[{}] Workspace  {}", outer_element_id, i);
+                    }
+
+                    *indentation_whtspcs += 1;
+
+                    //Recursion                    
+                    arrangement::tree(tree, f, *child_id, indentation_whtspcs);
+
+                    *indentation_whtspcs -= 1;
                 }
+
+                writeln!(f);
             },
             LayoutElement::Window(ref window) =>
             {
-                println!("├──[{}] Window: {} [{}]", 
+                indent(*indentation_whtspcs, f);
+                print!("├──[{}] Window: {} ", 
                     outer_element_id,
                     if let Some(view) = window.get_view(){
                         view.get_class()
                     }
                     else{
                         String::from("Untitled")
-                    },
-                    window.get_desired_geometry()
+                    }
                 );
+                
+                if tree.get_outer_geometry().contains_geometry(window.get_desired_geometry()){
+                    print!("[{}]", window.get_desired_geometry());
+                }
+                writeln!(f);
             },
             LayoutElement::None => {
-                println!("├──[{}] Unoccupied", outer_element_id);
+                indent(*indentation_whtspcs, f);
+                writeln!(f, "├──[{}] Unoccupied", outer_element_id);
             }
         }  
     }

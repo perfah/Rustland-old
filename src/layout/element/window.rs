@@ -75,8 +75,14 @@ impl Window{
                     // Application of inner offset
                     if let Some(inner_offet) = self.inner_offset{
                         Geometry::new(
-                            Point{x: geometry.origin.x + inner_offet as i32, y: geometry.origin.y + inner_offet as i32},
-                            Size{w: geometry.size.w - inner_offet, h: geometry.size.h - inner_offet}
+                            Point{
+                                x: self.desired_geometry.origin.x + inner_offet as i32, 
+                                y: self.desired_geometry.origin.y + inner_offet as i32
+                            },
+                            Size{
+                                w: self.desired_geometry.size.w - inner_offet, 
+                                h: self.desired_geometry.size.h - inner_offet
+                            }
                         )
                     }
                     else{

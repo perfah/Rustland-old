@@ -4,6 +4,8 @@
 use std::sync::RwLock;
 use std::io::Write;
 use std::process::Command;
+use std::io::{self, Read};
+
 
 #[macro_use]
 pub extern crate lazy_static;
@@ -53,4 +55,25 @@ pub extern fn compositor_ready()
         
         wm_state.tree.arrange();
     }
+    
+    let mut buffer = String::new();
+    /*
+    match io::stdin().read_to_string(&mut buffer)
+    {
+        Err(e) => {print!("{}", e); }
+        _ => {}
+    }
+    println!("a: {}", buffer);
+    */
+    /*    
+    let f = match File::open(buffer) {
+        Ok(file) => file,
+        Err(e) => {
+            // fallback in case of failure.
+            // you could log the error, panic, or do anything else.
+            println("{}", e);
+            open_another_file()
+        }
+    };
+*/
 }

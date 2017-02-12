@@ -15,7 +15,7 @@ pub enum LayoutElement
     // A passthrough container with exactly one active child element at a time
     Workspace(workspace::Workspace),
     
-    // An application
+    // Some sort of application
     Window(window::Window)
 }
 

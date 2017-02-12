@@ -181,10 +181,12 @@ impl LayoutTree {
     }
 }
 
-impl fmt::Debug for LayoutTree{
+impl fmt::Display for LayoutTree{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "a")
-        
+        let mut indentation_whtspcs = 0;
+        arrangement::tree(self, f, PARENT_ELEMENT, &mut indentation_whtspcs);
+
+        writeln!(f)
     }
 }
 

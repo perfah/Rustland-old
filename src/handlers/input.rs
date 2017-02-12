@@ -127,11 +127,10 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
     if state == KeyState::Pressed {
         let mut wm_state = WM_STATE.lock().unwrap();
 
-        //Press F4 for tree view
+        //Press F3 for tree view
         if sym == keysyms::KEY_F3{
             println!();
-            println!("~ Layout structure ~");
-            tree(&wm_state, PARENT_ELEMENT);
+            println!("~ Layout structure ~\n{}", wm_state.tree);
             return WM_CATCH_EVENT;
         }
 
@@ -143,21 +142,12 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
 
         if mods.mods == MOD_CTRL {
             if sym == keysyms::KEY_Left || sym == keysyms::KEY_Right {
-                use std::cmp;
-                use std::u16;
-
                 if let Some(mut element) = wm_state.tree.lookup_element(1) {
                     match *element{
                         LayoutElement::Workspace(ref mut wrkspc) => {
                             match sym{
-                                keysyms::KEY_Left => {
-                                    wrkspc.active_child = cmp::max(wrkspc.active_child - 1, 1);
-                                    println!("Switched workspace to the left: {}", wrkspc.active_child);
-                                },
-                                keysyms::KEY_Right => {
-                                    wrkspc.active_child = cmp::min(wrkspc.active_child + 1, u16::MAX);
-                                    println!("Switched workspace to the right: {}", wrkspc.active_child);
-                                },
+                                keysyms::KEY_Left => { wrkspc.prev_desktop(); },
+                                keysyms::KEY_Right => { wrkspc.next_desktop(); },
                                 _ => {}
                             }
                         }
@@ -166,6 +156,7 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
                 }
 
                 wm_state.tree.arrange();
+                println!("{}", wm_state.tree);
             }
 
             if sym == keysyms::KEY_c {

@@ -1,6 +1,9 @@
 use std::cell::*;
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::cmp;
+use std::u16;
+
 
 use rustwlc::*;
 
@@ -12,8 +15,8 @@ use super::LayoutElement;
 use layout::arrangement::*;
 
 pub struct Workspace{
-    pub active_child: u16,
-    children: Vec<LayoutElemID> 
+    active_desktop: usize,
+    desktops: Vec<LayoutElemID> 
 }
 
 impl Workspace{
@@ -26,28 +29,48 @@ impl Workspace{
         }
         
         Workspace{
-            active_child: 1,
-            children: children
+            active_desktop: 1,
+            desktops: children
         }
     }
 
     pub fn get_active_child_id(&self) -> LayoutElemID {
-        match self.children.get(self.active_child as usize){
-            Some(active_child) => { *active_child },
-            None => { panic!("Internal erorr!"); }
+        match self.desktops.get(self.active_desktop as usize){
+            Some(active_desktop) => { *active_desktop },
+            None => { panic!("Invalid desktop: {}", self.active_desktop); }
+        }   
+    }
+
+    pub fn set_active_desktop(&mut self, desktop: i16){
+        if desktop <= usize::min_value() as i16{
+            self.active_desktop = 0
         }
-        
+        else if desktop >= self.desktops.len() as i16 {
+            self.active_desktop = self.desktops.len() - 1;
+        }
+        else{
+            self.active_desktop = desktop as usize;
+        }
+    }
+
+    pub fn next_desktop(&mut self){
+        let active_desktop = self.active_desktop;
+        self.set_active_desktop(active_desktop as i16 + 1)
+    }
+    pub fn prev_desktop(&mut self){
+        let active_desktop = self.active_desktop;
+        self.set_active_desktop(active_desktop as i16 - 1)
     }
 
     pub fn get_all_children(&self) -> &Vec<LayoutElemID>
     {
-        &self.children
+        &self.desktops
     }
 
     pub fn get_offset(&self, tree: &LayoutTree, outer_geometry: Geometry, child: u16) -> Geometry
     {
         let offset = 
-            if child == self.active_child {
+            if child == self.active_desktop as u16{
                 Geometry::zero()
             }
             else{
