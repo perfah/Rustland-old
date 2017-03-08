@@ -52,10 +52,10 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
                     indent(*indentation_whtspcs, f);
 
                     if *child_id == element.get_active_child_id(){
-                        println!("├──[{}] Workspace [{}]", outer_element_id, i);
+                        writeln!("├──[{}] Workspace [{}]", outer_element_id, i);
                     }
                     else{
-                        println!("├──[{}] Workspace  {}", outer_element_id, i);
+                        writeln!("├──[{}] Workspace  {}", outer_element_id, i);
                     }
 
                     *indentation_whtspcs += 1;
@@ -71,7 +71,7 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
             LayoutElement::Window(ref window) =>
             {
                 indent(*indentation_whtspcs, f);
-                print!("├──[{}] Window: {} ", 
+                write!("├──[{}] Window: {} ", 
                     outer_element_id,
                     if let Some(view) = window.get_view(){
                         view.get_class()
@@ -82,7 +82,7 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
                 );
                 
                 if tree.get_outer_geometry().contains_geometry(window.get_desired_geometry()){
-                    print!("[{}]", window.get_desired_geometry());
+                    write!("[{}]", window.get_desired_geometry());
                 }
                 writeln!(f);
             },

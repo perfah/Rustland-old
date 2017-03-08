@@ -13,9 +13,11 @@ pub extern crate lazy_static;
 pub extern crate rustwlc;
 use rustwlc::*;
 
+extern crate common;
+use common::definitions;
+
 mod layout;
 mod handlers;
-mod definitions;
 
 pub mod wmstate;
 use wmstate::WM_STATE;
