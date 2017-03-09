@@ -5,7 +5,7 @@ use std::cell::*;
 use std::rc::Rc;
 
 use rustwlc::*;
-use handlers::input::InputDevice;
+use io::physical::InputDevice;
 
 use layout::*;
 use layout::element::workspace::Workspace;

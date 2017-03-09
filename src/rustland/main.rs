@@ -4,8 +4,7 @@
 use std::sync::RwLock;
 use std::io::Write;
 use std::process::Command;
-use std::io::{self, Read};
-
+use std::io::Read;
 
 #[macro_use]
 pub extern crate lazy_static;
@@ -17,18 +16,12 @@ extern crate common;
 use common::definitions;
 
 mod layout;
-mod handlers;
+mod io;
+use io::physical::InputDevice;
 
 pub mod wmstate;
 use wmstate::WM_STATE;
-use handlers::input::*;
 use layout::arrangement::*;
-
-/*
-1. Get find_first_empty_container to work
-2. Set up workspaces to hide views that belong to unactivated workspaces
-3. Setup new fmt (debugging ) implementations and move over from tree
-*/
 
 fn main() {
     callback::compositor_ready(compositor_ready);

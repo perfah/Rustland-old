@@ -1,6 +1,7 @@
 pub mod arrangement;
 pub mod element;
 pub mod rules;
+pub mod tag;
 
 use std::cmp;
 use std::fmt;
@@ -21,6 +22,7 @@ use layout::element::segmentation::*;
 use layout::element::window::*;
 
 use layout::rules::*;
+use layout::tag::*;
 
 pub const PARENT_ELEMENT: LayoutElemID = 0;
 
@@ -37,7 +39,10 @@ pub struct LayoutTree{
     // the complete geometrical surface of all monitors 
     outer_geometry: Geometry,
 
-    // 
+    // tag register used to give names to layout elements  
+    tags: TagRegister,
+
+    // rule_set: yet to be implemented
     rule_set: RefCell<Box<RuleSet>>,
 
     // a layout element for each WlcView PID
@@ -53,6 +58,7 @@ impl LayoutTree {
             active_id: PARENT_ELEMENT,  
             active_workspace: default_workspace,
             elements: HashMap::new(),
+            tags: TagRegister::init(),
             outer_geometry: outer_geometry,
             rule_set: rule_set,
             view_assoc: HashMap::new()
@@ -60,6 +66,7 @@ impl LayoutTree {
 
         //Place root 
         let parent_id = tree.spawn_element();
+        tree.tags.tag_element("root", parent_id);
         let parent_element = Segmentation::init(&mut tree, no_monitors, Orientation::Horizontal);
         for child_id in parent_element.get_children(){
             let workspace = Workspace::init(&mut tree, MAX_WORKSPACES_LIMIT);
@@ -67,8 +74,6 @@ impl LayoutTree {
         }
         
         tree.swap_element(parent_id, LayoutElement::Segm(parent_element));
-        
-
 
         tree
     }
@@ -78,16 +83,26 @@ impl LayoutTree {
         arrangement::arrange(&self, PARENT_ELEMENT, self.outer_geometry);
     }
 
-    pub fn lookup_element(&self, id: LayoutElemID) -> Option<RefMut<LayoutElement>>{   
-        // is option really necessary
-        
-        match self.elements.get(&id)
+    pub fn lookup_element(&self, elem_id: LayoutElemID) -> Option<RefMut<LayoutElement>>{   
+        match self.elements.get(&elem_id)
         {
             Some(element) => Some(element.borrow_mut()),
             None => { panic!("Element out of reach.") }
         }
     }
+    pub fn lookup_element_by_tag(&self, tag: &str) -> Vec<RefMut<LayoutElement>>{   
+        let mut element_references = Vec::<RefMut<LayoutElement>>::new();
+        
+        for elem_id in self.tags.address_element_by_tag(tag){
+            match self.elements.get(&elem_id)
+            {
+                Some(element) => { element_references.push(element.borrow_mut()) },
+                None => { panic!("Element out of reach.") }
+            }
+        }
 
+        element_references
+    }
     pub fn lookup_element_from_view(&self, view_pid: i32) -> LayoutElemID{
         match self.view_assoc.get(&view_pid)
         {
@@ -96,26 +111,23 @@ impl LayoutTree {
         }
     }
 
-    pub fn swap_element(&mut self, id: LayoutElemID, new_element: LayoutElement) -> Option<RefCell<LayoutElement>>
+    pub fn swap_element(&mut self, elem_id: LayoutElemID, new_element: LayoutElement) -> Option<RefCell<LayoutElement>>
     {
-        self.elements.insert(
-            id, 
-            RefCell::new(new_element)
-        )
+        self.swap_cell(elem_id, RefCell::new(new_element))
     }
-    pub fn swap_cell(&mut self, id: LayoutElemID, new_cell: RefCell<LayoutElement>) -> Option<RefCell<LayoutElement>>
+    pub fn swap_cell(&mut self, elem_id: LayoutElemID, new_cell: RefCell<LayoutElement>) -> Option<RefCell<LayoutElement>>
     {
         match *(new_cell.borrow()){
             LayoutElement::Window(ref window) => { 
                 if let Some(view) = window.get_view(){
-                    self.view_assoc.insert(view.get_pid(), id); 
+                    self.view_assoc.insert(view.get_pid(), elem_id); 
                 }
             }
             _ => {}
         }
 
         let old_cell = self.elements.insert(
-            id, 
+            elem_id, 
             new_cell
         );
 

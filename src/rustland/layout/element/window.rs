@@ -1,3 +1,4 @@
+
 #![feature(box_syntax)]
 #![feature(core)]
 #![feature(unboxed_closures)]
@@ -80,8 +81,8 @@ impl Window{
                                 y: self.desired_geometry.origin.y + inner_offet as i32
                             },
                             Size{
-                                w: self.desired_geometry.size.w - inner_offet, 
-                                h: self.desired_geometry.size.h - inner_offet
+                                w: self.desired_geometry.size.w - 2*inner_offet, 
+                                h: self.desired_geometry.size.h - 2*inner_offet
                             }
                         )
                     }
@@ -161,13 +162,16 @@ pub extern fn on_view_created(view: WlcView) -> bool {
 
             if let Some(last_id) = wm_state.tree.last_window_id(){
                 let extension = super::segmentation::Segmentation::init_horiz_50_50(&mut wm_state.tree);
-                let preoccupied_id = extension.get_children()[0];
-                let unoccupied_id = extension.get_children()[1];
+                let new_preoccupied_id = extension.get_children()[0];
+                let new_unoccupied_id = extension.get_children()[1];
 
-                if let Some(tmp) = wm_state.tree.swap_element(last_id, LayoutElement::Segm(extension))
+                // update tags according to element swap
+                wm_state.tree.tags.handle_element_swap(last_id, new_preoccupied_id);
+
+                if let Some(thrown_out) = wm_state.tree.swap_element(last_id, LayoutElement::Segm(extension))
                 {
-                    wm_state.tree.swap_cell(preoccupied_id, tmp);
-                    unoccupied_id
+                    wm_state.tree.swap_cell(new_preoccupied_id, thrown_out);
+                    new_unoccupied_id
                 }
                 else {
                     panic!("Last index did not exist!");
@@ -177,6 +181,9 @@ pub extern fn on_view_created(view: WlcView) -> bool {
                 panic!("ERROR: No space in layout found!")
             }
         };
+
+    // Add tag
+    wm_state.tree.tags.tag_element(view.get_class().as_ref(), window_id);
 
     wm_state.tree.swap_element(window_id, LayoutElement::Window(window));  
     if let Some(element) = wm_state.tree.lookup_element(window_id)

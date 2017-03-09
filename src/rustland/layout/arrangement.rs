@@ -16,7 +16,7 @@ use super::element::window::*;
 use definitions::{LayoutElemID};
 
 
-/// Arrangemnet  
+/// Arrangement  
 /// Recursive methods for describing and interacting with the layout
 
 pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutElemID, indentation_whtspcs: &mut i32)
@@ -27,6 +27,18 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
         }
     };
 
+    let format_tags = |elem_id| {
+        let mut output = String::new();
+        
+        for tag in tree.tags.address_tags_by_element(elem_id){
+            output.push_str("#");
+            output.push_str(tag.as_ref());
+            output.push_str(" ");
+        }
+
+        output
+    };
+
     // Use debug for LayoutElement
     if let Some(outer_element) = tree.lookup_element(outer_element_id){
         match *outer_element
@@ -34,7 +46,7 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
             LayoutElement::Segm(ref element) =>
             {
                 indent(*indentation_whtspcs, f);
-                writeln!(f, "├──[{}] Segmentation", outer_element_id);
+                writeln!(f, "├──[{}] Segmentation: {}", outer_element_id, format_tags(outer_element_id));
 
                 *indentation_whtspcs += 1;
                 for (i, child_id) in element.get_children().iter().enumerate()
@@ -46,16 +58,15 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
             },
             LayoutElement::Workspace(ref element) =>
             {
-               
                 for (i, child_id) in element.get_all_children().iter().enumerate()
                 {
                     indent(*indentation_whtspcs, f);
 
                     if *child_id == element.get_active_child_id(){
-                        writeln!("├──[{}] Workspace [{}]", outer_element_id, i);
+                        writeln!(f, "├──[{}] Workspace [{}]: {}", outer_element_id, i, format_tags(outer_element_id));
                     }
                     else{
-                        writeln!("├──[{}] Workspace  {}", outer_element_id, i);
+                        writeln!(f, "├──[{}] Workspace  {}: {}", outer_element_id, i, format_tags(outer_element_id));
                     }
 
                     *indentation_whtspcs += 1;
@@ -71,18 +82,10 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
             LayoutElement::Window(ref window) =>
             {
                 indent(*indentation_whtspcs, f);
-                write!("├──[{}] Window: {} ", 
-                    outer_element_id,
-                    if let Some(view) = window.get_view(){
-                        view.get_class()
-                    }
-                    else{
-                        String::from("Untitled")
-                    }
-                );
+                write!(f, "├──[{}] Window: {}", outer_element_id, format_tags(outer_element_id));
                 
                 if tree.get_outer_geometry().contains_geometry(window.get_desired_geometry()){
-                    write!("[{}]", window.get_desired_geometry());
+                    write!(f, "[{}]", window.get_desired_geometry());
                 }
                 writeln!(f);
             },
