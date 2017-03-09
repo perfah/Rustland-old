@@ -90,9 +90,11 @@ impl TagRegister{
     pub fn handle_element_swap(&mut self, elem1_id: LayoutElemID, elem2_id: LayoutElemID){
         for tag_elements in self.bindings.values_mut(){
             for i in 0..tag_elements.len(){
-                match tag_elements[i]{
-                    elem1_id => tag_elements[i] = elem2_id,
-                    elem2_id => tag_elements[i] = elem1_id
+                if tag_elements[i] == elem1_id{
+                    tag_elements[i] = elem2_id;
+                }
+                else if tag_elements[i] == elem2_id{
+                    tag_elements[i] = elem1_id;
                 }
             }
         }
