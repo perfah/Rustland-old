@@ -184,6 +184,8 @@ pub extern fn on_view_created(view: WlcView) -> bool {
 
     // Add tag
     wm_state.tree.tags.tag_element(view.get_class().as_ref(), window_id);
+    let elements = wm_state.tree.get_all_element_ids();
+    wm_state.tree.tags.refresh_tag_statuses(elements);
 
     wm_state.tree.swap_element(window_id, LayoutElement::Window(window));  
     if let Some(element) = wm_state.tree.lookup_element(window_id)

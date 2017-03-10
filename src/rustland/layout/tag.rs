@@ -9,7 +9,7 @@ pub struct TagRegister{
     bindings: HashMap<String, Vec<LayoutElemID>>,
 
     // closure functions (values) determining whether LayoutElements can be addressed by specific tags (keys) 
-    tag_conditions: HashMap<String, Box<Fn(LayoutElemID, &LayoutTree) -> bool>>
+    tag_conditions: HashMap<String, Box<Fn(LayoutElemID) -> bool>>
 }
 
 impl TagRegister{
@@ -48,8 +48,8 @@ impl TagRegister{
         }
     }
 
-    pub fn tag_element_on_condition<F: Fn(LayoutElemID, &LayoutTree) -> bool + 'static>(&mut self, tag: String, condition: F) {
-        self.tag_conditions.insert(tag, Box::new(condition));
+    pub fn tag_element_on_condition<F: Fn(LayoutElemID) -> bool + 'static>(&mut self, tag: &str, condition: F) {
+        self.tag_conditions.insert(String::from(tag), Box::new(condition));
     }
 
     pub fn untag_element(&mut self, elem_id: LayoutElemID){
@@ -62,16 +62,16 @@ impl TagRegister{
         }
     }
 
-    pub fn remove_tag(&mut self, tag: String, include_conditions: bool){
-        self.bindings.remove(&tag);
+    pub fn remove_tag(&mut self, tag: &str, include_conditions: bool){
+        self.bindings.remove(&tag.to_string());
     }
 
-    pub fn refresh_tag_statuses(&mut self, tree: &LayoutTree, elem_ids: &Vec<LayoutElemID>){
+    pub fn refresh_tag_statuses(&mut self, element_candidates: Vec<LayoutElemID>){
         for (tag, det) in &self.tag_conditions {
             let tag_elements = self.bindings.entry(tag.clone()).or_insert(Vec::new());
 
-            for cand_id in elem_ids{
-                if det(*cand_id, tree) { 
+            for cand_id in &element_candidates{
+                if det(*cand_id) { 
                     if !tag_elements.contains(&cand_id) {
                         tag_elements.push(*cand_id);
                     }

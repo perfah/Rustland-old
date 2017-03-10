@@ -66,7 +66,7 @@ impl LayoutTree {
 
         //Place root 
         let parent_id = tree.spawn_element();
-        tree.tags.tag_element("root", parent_id);
+        tree.tags.tag_element_on_condition("root", |elem_id| elem_id == PARENT_ELEMENT);
         let parent_element = Segmentation::init(&mut tree, no_monitors, Orientation::Horizontal);
         for child_id in parent_element.get_children(){
             let workspace = Workspace::init(&mut tree, MAX_WORKSPACES_LIMIT);
@@ -158,6 +158,16 @@ impl LayoutTree {
             Some(parent) => parent,
             None => { panic!("Root not found!"); }
         }
+    }
+
+    pub fn get_all_element_ids(&self) -> Vec<LayoutElemID>{
+        let mut elements_ids = Vec::new();
+
+        for elem_id in self.elements.keys() {
+            elements_ids.push(elem_id.clone())
+        }
+
+        elements_ids
     }
 
     pub fn last_window_id(&self) -> Option<LayoutElemID>{
