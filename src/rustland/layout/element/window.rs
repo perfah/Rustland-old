@@ -8,6 +8,7 @@ use std::vec::Vec;
 use std::option::*;
 use std::boxed::Box;
 use std::cell::*;
+use std::process::Child;
 
 use rustwlc::types::*;
 use rustwlc::handle::*;
@@ -22,14 +23,16 @@ use super::LayoutElement;
 
 pub struct Window {
     view: Option<WlcView>,
+    child_process: Option<Child>,
     desired_geometry: Geometry,
     inner_offset: Option<u32>
 }
 
 impl Window{
-    fn init(view: WlcView) -> Window{
+    fn init(view: WlcView, child_process: Child) -> Window{
         Window{
             view: Some(view),
+            child_process: Some(child_process),  
             desired_geometry: Geometry::zero(),
             inner_offset: Some(30)
         }
@@ -38,6 +41,7 @@ impl Window{
     fn init_dummy() -> Window{
         Window{
             view: None,
+            child_process: None,
             desired_geometry: Geometry::zero(),
             inner_offset: Some(30)
         }
@@ -183,7 +187,7 @@ pub extern fn on_view_created(view: WlcView) -> bool {
         };
 
     // Add tag
-    wm_state.tree.tags.tag_element(view.get_class().as_ref(), window_id);
+    wm_state.tree.tags.tag_element(view.get_class().to_lowercase().as_ref(), window_id);
     let elements = wm_state.tree.get_all_element_ids();
     wm_state.tree.tags.refresh_tag_statuses(elements);
 
@@ -193,7 +197,7 @@ pub extern fn on_view_created(view: WlcView) -> bool {
         
     }
    
-    wm_state.tree.arrange();
+    wm_state.tree.refresh();
 
     WM_CATCH_EVENT
 }

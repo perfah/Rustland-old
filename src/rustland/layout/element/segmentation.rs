@@ -59,6 +59,12 @@ impl Segmentation{
         &self.children
     }
 
+    pub fn get_children_mut(&mut self) -> &mut Vec<LayoutElemID>
+    {
+        &mut self.children
+    }
+
+
     pub fn get_orientation(self) -> Orientation
     {
         self.orientation

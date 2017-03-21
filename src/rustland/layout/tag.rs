@@ -20,8 +20,8 @@ impl TagRegister{
         }
     }
 
-    pub fn address_element_by_tag(&self, tag: &str) -> Vec<LayoutElemID> {
-        match self.bindings.get(&tag.to_string())
+    pub fn address_element_by_tag(&self, tag: String) -> Vec<LayoutElemID> {
+        match self.bindings.get(&tag)
         {
             Some(elements) => elements.clone(),
             None => Vec::new()

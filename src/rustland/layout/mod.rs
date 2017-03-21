@@ -40,7 +40,7 @@ pub struct LayoutTree{
     outer_geometry: Geometry,
 
     // tag register used to give names to layout elements  
-    tags: TagRegister,
+    pub tags: TagRegister,
 
     // rule_set: yet to be implemented
     rule_set: RefCell<Box<RuleSet>>,
@@ -78,9 +78,12 @@ impl LayoutTree {
         tree
     }
 
-    pub fn arrange(&self)
+    pub fn refresh(&mut self)
     {
-        arrangement::arrange(&self, PARENT_ELEMENT, self.outer_geometry);
+        let elements = self.get_all_element_ids();
+        self.tags.refresh_tag_statuses(elements);
+
+        arrangement::arrange(self, PARENT_ELEMENT, self.outer_geometry);
     }
 
     pub fn lookup_element(&self, elem_id: LayoutElemID) -> Option<RefMut<LayoutElement>>{   
@@ -90,7 +93,7 @@ impl LayoutTree {
             None => { panic!("Element out of reach.") }
         }
     }
-    pub fn lookup_element_by_tag(&self, tag: &str) -> Vec<RefMut<LayoutElement>>{   
+    pub fn lookup_element_by_tag(&self, tag: String) -> Vec<RefMut<LayoutElement>>{   
         let mut element_references = Vec::<RefMut<LayoutElement>>::new();
         
         for elem_id in self.tags.address_element_by_tag(tag){

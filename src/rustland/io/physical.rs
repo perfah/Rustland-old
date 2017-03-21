@@ -136,7 +136,7 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
 
         //Press F5 to force an update to the arrangement
         if sym == keysyms::KEY_F5{
-            wm_state.tree.arrange();
+            wm_state.tree.refresh();
             return WM_CATCH_EVENT;
         }
 
@@ -155,7 +155,7 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
                     }
                 }
 
-                wm_state.tree.arrange();
+                wm_state.tree.refresh();
                 println!("{}", wm_state.tree);
             }
 

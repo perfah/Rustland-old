@@ -13,14 +13,13 @@ use super::*;
 use wmstate::*;
 use super::element::*;
 use super::element::window::*;
-use definitions::{LayoutElemID};
+use definitions::{TAG_PREFIX, LayoutElemID};
 
 
 /// Arrangement  
 /// Recursive methods for describing and interacting with the layout
 
-pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutElemID, indentation_whtspcs: &mut i32)
-{
+pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutElemID, indentation_whtspcs: &mut i32){
     let indent = |whtspcs, f: &mut fmt::Formatter| {
         for i in 0..whtspcs * 4{
             write!(f, " ");
@@ -31,7 +30,7 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
         let mut output = String::new();
         
         for tag in tree.tags.address_tags_by_element(elem_id){
-            output.push_str("#");
+            output.push_str(TAG_PREFIX);
             output.push_str(tag.as_ref());
             output.push_str(" ");
         }
@@ -79,7 +78,7 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
 
                 writeln!(f);
             },
-            LayoutElement::Window(ref window) =>
+            LayoutElement::Window(ref window) =>    
             {
                 indent(*indentation_whtspcs, f);
                 write!(f, "├──[{}] Window: {}", outer_element_id, format_tags(outer_element_id));
@@ -125,8 +124,7 @@ pub fn find_first_empty_element(tree: &LayoutTree, outer_element_id: LayoutElemI
     return None;
 }
 
-pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry: Geometry)
-{
+pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry: Geometry){
     if let Some(mut outer_element) = tree.lookup_element(outer_element_id){
         match outer_element.deref_mut()
         {
@@ -152,5 +150,26 @@ pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry
             },
             _ => {}
         }  
+    }
+}
+
+pub fn move_element(wm_state: &mut WMState, carry: LayoutElemID, destination: LayoutElemID) -> Result<String, String>{
+    if let Some(mut destination) = wm_state.tree.lookup_element(destination){
+        match destination.deref_mut()
+        {
+            &mut LayoutElement::Segm(ref mut segm) => {
+                let children = segm.get_children_mut();
+                children.push(carry);
+
+                Ok(String::from("Element moved"))
+            },
+            &mut LayoutElement::Workspace(ref mut wrkspc) => {
+                Err(String::from(""))
+            },
+            _ => Err(String::from("The destination needs to be either a segmentation or a workspace."))
+        }
+    }
+    else{
+        Err(String::from("Destination element missing in layout."))
     }
 }

@@ -12,3 +12,6 @@ pub const WM_CATCH_EVENT: bool = true;
 pub const LEFT_CLICK: u32 = 0x110;
 pub const RIGHT_CLICK: u32 = 0x111;
 
+pub const SOCKET_PORT: u16 = 4451;
+pub const SOCKET_DETERMINANT: u8 = b'$';
+pub const TAG_PREFIX: &str = "@";

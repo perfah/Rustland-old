@@ -5,15 +5,22 @@ use std::sync::RwLock;
 use std::io::Write;
 use std::process::Command;
 use std::io::Read;
+use std::thread;
 
 #[macro_use]
 pub extern crate lazy_static;
+#[macro_use]
+pub extern crate serde_derive;
+#[macro_use]
+pub extern crate serde_json;
 
 pub extern crate rustwlc;
 use rustwlc::*;
 
 extern crate common;
 use common::definitions;
+use wmstate::{PENDING_JOBS, FINALIZED_JOBS};
+use common::job::JobType;
 
 mod layout;
 mod io;
@@ -22,6 +29,8 @@ use io::physical::InputDevice;
 pub mod wmstate;
 use wmstate::WM_STATE;
 use layout::arrangement::*;
+use io::tcp_server::handle_incoming_requests;
+
 
 fn main() {
     callback::compositor_ready(compositor_ready);
@@ -48,27 +57,10 @@ pub extern fn compositor_ready()
     {
         wm_state.input_dev = InputDevice::init();
         
-        wm_state.tree.arrange();
+        wm_state.tree.refresh();
     }
-    
-    let mut buffer = String::new();
-    /*
-    match io::stdin().read_to_string(&mut buffer)
-    {
-        Err(e) => {print!("{}", e); }
-        _ => {}
-    }
-    println!("a: {}", buffer);
-    */
-    /*    
-    let f = match File::open(buffer) {
-        Ok(file) => file,
-        Err(e) => {
-            // fallback in case of failure.
-            // you could log the error, panic, or do anything else.
-            println("{}", e);
-            open_another_file()
-        }
-    };
-*/
+
+    thread::spawn(move || {
+        handle_incoming_requests();
+    });     
 }

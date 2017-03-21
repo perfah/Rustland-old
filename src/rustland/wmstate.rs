@@ -1,8 +1,12 @@
+extern crate serde;
+extern crate serde_json;
+use self::serde_json::Map;
 
 use std::sync::Mutex;
 use std::marker::Sync;
 use std::cell::*;
 use std::rc::Rc;
+use std::net::TcpListener;
 
 use rustwlc::*;
 use io::physical::InputDevice;
@@ -12,14 +16,12 @@ use layout::element::workspace::Workspace;
 use layout::arrangement::*;
 use layout::rules::*;
 
-extern crate serde;
-extern crate serde_json;
-use self::serde_json::Map;
+use common::job::Job;
 
 pub struct WMState{
     pub input_dev: InputDevice,
     pub tree: LayoutTree,
-    pub resolution: Size
+    pub resolution: Size,
 }
 
 unsafe impl Send for WMState {}
@@ -47,4 +49,7 @@ lazy_static! {
         },
         1
     ));
+
+    pub static ref PENDING_JOBS: Mutex<Vec<Job> >= Mutex::new(Vec::new());
+    pub static ref FINALIZED_JOBS: Mutex<Vec<Job>> = Mutex::new(Vec::new());
 }
