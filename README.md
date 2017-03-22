@@ -1,10 +1,10 @@
-Rustland - Wayland Compositor 
+Rustland - A Tiling Wayland Compositor 
 =============================
 
 What is Rustland?
 -----------------
 
-  A tiling Wayland compositor written in Rust with the aim of flexibility and powerful customizability.  
+  A **work-in-progress** tiling Wayland compositor written in Rust with the aim of flexibility and powerful customizability.  
   Rustland is currently in the alpha stage so it will probably not fit your needs just yet.
 
 Current state
@@ -24,10 +24,7 @@ rlctl - utility
 
    rlctl is a proof of concept command line utility for controlling the rustland compositor from the outside. 
    This is developed alongside the compositor and makes use of the TCP functionality.  
-   Example syntax:
-    - ``rlctl tree``
-    - ``rlctl runapp /usr/bin/thunar``
-    - ``rlctl @thunar moveto @root``
+   Example syntax: ``rlctl tree``, ``rlctl runapp /usr/bin/thunar``, ``rlctl @thunar moveto @root``
 
 Potential features in the future
 --------------------------------
