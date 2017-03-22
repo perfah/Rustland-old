@@ -1,10 +1,11 @@
-Rustland - A Tiling Wayland Compositor 
-=============================
+Rustland
+========
 
 What is Rustland?
 -----------------
 
-  A **work-in-progress** tiling Wayland compositor written in Rust with the aim of flexibility and powerful customizability.  
+  A **work-in-progress** tiling Wayland compositor written in Rust with the aim of flexibility and powerful customizability. 
+  
   Rustland is currently in the alpha stage so it will probably not fit your needs just yet.
 
 Current state
