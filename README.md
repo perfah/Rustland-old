@@ -11,7 +11,7 @@ What is Rustland?
 Current state
 -------------
 
- - On-demand like creation of window layouting 
+ - On-demand like creation of window layouts 
  - Very basic automatic window tiling
  - Workspaces
  - Tag system for referencing items in the layout
