@@ -2,10 +2,9 @@ extern crate serde;
 extern crate serde_json;
 use self::serde_json::Map;
 
-use std::sync::Mutex;
+use std::sync::{RwLock, Mutex};
 use std::marker::Sync;
-use std::cell::*;
-use std::rc::Rc;
+use std::cell::{RefCell, RefMut};
 use std::net::TcpListener;
 
 use rustwlc::*;
@@ -15,40 +14,31 @@ use layout::*;
 use layout::element::workspace::Workspace;
 use layout::arrangement::*;
 use layout::rules::*;
+use layout::tag::TagRegister;
 
+use common::definitions::FALLBACK_RESOLUTION;
 use common::job::Job;
 
 pub struct WMState{
-    pub input_dev: InputDevice,
     pub tree: LayoutTree,
-    pub resolution: Size,
+    pub input_dev: Option<InputDevice>,
 }
+
 
 unsafe impl Send for WMState {}
-
-impl WMState{
-    fn new(resolution: Size, no_monitors: u16) -> WMState{
-        WMState{
-            input_dev: InputDevice::none(),
-            tree: LayoutTree::init(
-                Geometry::new(Point{x: 0, y: 0}, resolution),
-                no_monitors, 
-                RefCell::new(Box::new(Circulation::init()))
-            ),
-            resolution: resolution
-        }
-    }
-
-}
+unsafe impl Sync for WMState {}
 
 lazy_static! {
-    pub static ref WM_STATE: Mutex<WMState> = Mutex::new(WMState::new(
-        Size{
-            w: 1920,
-            h: 1080
-        },
-        1
-    ));
+    pub static ref WM_STATE: RwLock<WMState> = RwLock::new(
+        WMState{
+            tree: LayoutTree::init(
+                Geometry::new(Point::origin(), FALLBACK_RESOLUTION),
+                1,
+                RefCell::new(Box::new(Circulation::init()))
+            ),
+            input_dev: None
+        }
+    );
 
     pub static ref PENDING_JOBS: Mutex<Vec<Job> >= Mutex::new(Vec::new());
     pub static ref FINALIZED_JOBS: Mutex<Vec<Job>> = Mutex::new(Vec::new());

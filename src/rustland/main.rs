@@ -27,38 +27,35 @@ mod io;
 use io::physical::InputDevice;
 
 pub mod wmstate;
-use wmstate::WM_STATE;
+use wmstate::{WMState, WM_STATE};
 use layout::arrangement::*;
 use io::tcp_server::handle_incoming_requests;
 
-
 fn main() {
-    callback::compositor_ready(compositor_ready);
-    callback::view_created(layout::element::window::on_view_created);
-    callback::view_destroyed(layout::element::window::on_view_destroyed);
-    callback::view_focus(layout::element::window::on_view_focus);
-    callback::view_request_move(layout::element::window::on_view_request_move);
-    callback::view_request_resize(layout::element::window::on_view_request_resize);
-    callback::output_resolution(layout::on_output_resolution);
-
     // The default log handler will print wlc logs to stdout
     rustwlc::log_set_default_handler();
     let run_fn = rustwlc::init().expect("Unable to initialize!");
 
+    callback::output_resolution(layout::on_output_resolution);
+    callback::compositor_ready(compositor_ready);
     run_fn();
-    
 }
 
 pub extern fn compositor_ready()
 {
     let root = WlcView::root();
     
-    if let Ok(mut wm_state) =  WM_STATE.lock()
-    {
-        wm_state.input_dev = InputDevice::init();
-        
+    if let Ok(mut wm_state) = WM_STATE.write(){
+        wm_state.input_dev = Some(InputDevice::init());
         wm_state.tree.refresh();
     }
+    
+    // Active callbacks
+    callback::view_created(layout::element::window::on_view_created);
+    callback::view_destroyed(layout::element::window::on_view_destroyed);
+    callback::view_focus(layout::element::window::on_view_focus);
+    callback::view_request_move(layout::element::window::on_view_request_move);
+    callback::view_request_resize(layout::element::window::on_view_request_resize);
 
     thread::spawn(move || {
         handle_incoming_requests();

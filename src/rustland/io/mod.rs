@@ -52,9 +52,9 @@ fn process_job(job: &Job) -> Result<String, String>{
 
             Ok(String::from("Application started."))
         },
-        JobType::SEND_TREE => Ok(format!("{}", WM_STATE.lock().unwrap().tree)),
+        JobType::SEND_TREE => Ok(format!("{}", WM_STATE.write().unwrap().tree)),
         JobType::MOVE_TO => {
-            let mut wmstate = WM_STATE.lock().unwrap();
+            let mut wmstate = WM_STATE.write().unwrap();
 
             if job.head_tag.is_none() || job.contextual_tags.is_empty(){
                 Err(String::from("Move what, to where?"))

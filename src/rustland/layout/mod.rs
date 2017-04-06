@@ -201,6 +201,10 @@ impl LayoutTree {
         self.outer_geometry
     }
 
+    pub fn set_outer_geometry(&mut self, new_geometry: Geometry){
+        self.outer_geometry = new_geometry;
+    }
+
     pub fn get_rule_set(&self) -> &RefCell<Box<RuleSet>>{
         &self.rule_set
     }
@@ -216,5 +220,9 @@ impl fmt::Display for LayoutTree{
 }
 
 pub extern fn on_output_resolution(output: WlcOutput, _from: &Size, _to: &Size) {
-    
+    let mut wm_state = WM_STATE.write().unwrap();
+
+    wm_state.tree.set_outer_geometry(Geometry::new(Point::origin(), *_to));
+
+    println!("Updated resolution: {}", _to);
 }

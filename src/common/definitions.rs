@@ -1,3 +1,6 @@
+extern crate rustwlc;
+use self::rustwlc::*;
+
 // An identifier type for elements of the layout
 pub type LayoutElemID = u16;
 
@@ -15,3 +18,5 @@ pub const RIGHT_CLICK: u32 = 0x111;
 pub const SOCKET_PORT: u16 = 4451;
 pub const SOCKET_DETERMINANT: u8 = b'$';
 pub const TAG_PREFIX: &str = "@";
+
+pub const FALLBACK_RESOLUTION: Size = Size { w: 640, h: 480 };

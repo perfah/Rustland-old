@@ -138,7 +138,7 @@ impl Window{
 }
 
 pub extern fn on_view_created(view: WlcView) -> bool {
-    let mut wm_state = WM_STATE.lock().unwrap();
+    let mut wm_state = WM_STATE.write().unwrap();
 
     view.set_type(VIEW_BIT_UNMANAGED, false);
     view.set_mask(view.get_output().get_mask());
@@ -203,7 +203,7 @@ pub extern fn on_view_created(view: WlcView) -> bool {
 }
 
 pub extern fn on_view_destroyed(view: WlcView) {
-    let mut wm_state = WM_STATE.lock().unwrap();
+    let mut wm_state = WM_STATE.write().unwrap();
     
     /*
         This will cause seg. fault for some reason:

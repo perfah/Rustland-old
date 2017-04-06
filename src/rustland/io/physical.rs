@@ -58,17 +58,19 @@ impl InputDevice{
 }
 
 pub extern fn on_pointer_motion(_in_view: WlcView, _time: u32, point: &Point) -> bool {
-    let mut wm_state = WM_STATE.lock().unwrap();
+    let mut wm_state = WM_STATE.write().unwrap();
 
-    let dx = point.x - wm_state.input_dev.mouse_location.x;
-    let dy = point.y - wm_state.input_dev.mouse_location.y;
+    if let Some(ref mut input_dev) = wm_state.input_dev{
+        let dx = point.x - input_dev.mouse_location.x;
+        let dy = point.y - input_dev.mouse_location.y;
 
-    wm_state.input_dev.mouseTravel(
-        Point{
-            x: dx,
-            y: dy
-        }
-    );
+        input_dev.mouseTravel(
+            Point{
+                x: dx,
+                y: dy
+            }
+        );
+    }
 
     // Note: Forward is REQUIRED for input to be registered by clients
     WM_FORWARD_EVENT_TO_CLIENT
@@ -125,7 +127,7 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
     let sym = input::keyboard::get_keysym_for_key(key, *mods);
 
     if state == KeyState::Pressed {
-        let mut wm_state = WM_STATE.lock().unwrap();
+        let mut wm_state = WM_STATE.write().unwrap();
 
         //Press F3 for tree view
         if sym == keysyms::KEY_F3{
