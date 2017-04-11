@@ -12,7 +12,7 @@ pub extern crate serde_json;
 
 extern crate common;
 use common::job::{Job, JobType};
-use common::definitions::{SOCKET_DETERMINANT, TAG_PREFIX};
+use common::definitions::{ElementReference, SOCKET_DETERMINANT, TAG_PREFIX};
 
 fn parse_job_type(repr: String) -> Option<JobType>{
     match repr.as_ref()
@@ -35,7 +35,7 @@ fn generate_job_from_args(mut args: Peekable<env::Args>) -> Option<Job>{
 
     if let Some(head_tag_or_cmd) = args.next(){
         if head_tag_or_cmd.contains(TAG_PREFIX){
-            job.head_tag = Some(head_tag_or_cmd.trim().replace(TAG_PREFIX, ""));
+            job.main_ref = Some(ElementReference::Tag(head_tag_or_cmd.trim().replace(TAG_PREFIX, "")));
         }
         else{
             match parse_job_type(head_tag_or_cmd){
@@ -45,7 +45,7 @@ fn generate_job_from_args(mut args: Peekable<env::Args>) -> Option<Job>{
         }
     }
     
-    if job.head_tag.is_some(){
+    if job.main_ref.is_some(){
         if let Some(command) = args.next(){
             println!("{}", command);
 
@@ -61,7 +61,17 @@ fn generate_job_from_args(mut args: Peekable<env::Args>) -> Option<Job>{
     }
 
     while let Some(arg) = args.next(){
-        job.contextual_tags.push(arg);
+        if arg.contains(TAG_PREFIX){
+            if job.main_ref.is_none(){
+                job.main_ref = Some(ElementReference::Tag(arg.replace(TAG_PREFIX, "")));
+            }
+            else{
+                job.contextual_refs.push(ElementReference::Tag(arg.replace(TAG_PREFIX, "")));
+            }
+        }
+        else{
+            job.anonymous_args.push(arg);
+        }
     }
 
     return Some(job);

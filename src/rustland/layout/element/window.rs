@@ -15,7 +15,8 @@ use rustwlc::handle::*;
 use rustwlc::callback;
 
 use wmstate::*;
-use definitions::{WM_CATCH_EVENT};
+use definitions::{ElementReference, WM_CATCH_EVENT};
+use common::job::{Job, JobType};
 use layout::*;
 use layout::arrangement::*;
 use layout::rules::*;
@@ -148,56 +149,49 @@ pub extern fn on_view_created(view: WlcView) -> bool {
     let mut window = Window::init_dummy();
     window.attach_view(view);
 
-    // Hardcoded exceptions for now:
-    if let Some(view) = window.get_view(){
-        if view.get_class() == "" || view.get_class() == "imv"{
-            return WM_CATCH_EVENT;
-        }
-    }
-
-    let window_id = 
-        if let Some(unoccupied_id) = find_first_empty_element(&wm_state.tree, PARENT_ELEMENT)
-        {
-            unoccupied_id
-        }
-        else
-        {
-            println!("NOTICE: Extending the layout structure!");
-
-            if let Some(last_id) = wm_state.tree.last_window_id(){
-                let extension = super::segmentation::Segmentation::init_horiz_50_50(&mut wm_state.tree);
-                let new_preoccupied_id = extension.get_children()[0];
-                let new_unoccupied_id = extension.get_children()[1];
-
-                // update tags according to element swap
-                wm_state.tree.tags.handle_element_swap(last_id, new_preoccupied_id);
-
-                if let Some(thrown_out) = wm_state.tree.swap_element(last_id, LayoutElement::Segm(extension))
-                {
-                    wm_state.tree.swap_cell(new_preoccupied_id, thrown_out);
-                    new_unoccupied_id
-                }
-                else {
-                    panic!("Last index did not exist!");
-                }
+    if view.get_type().is_empty(){
+        let window_id = 
+            if let Some(unoccupied_id) = find_first_empty_element(&wm_state.tree, PARENT_ELEMENT)
+            {
+                unoccupied_id
             }
-            else{
-                panic!("ERROR: No space in layout found!")
-            }
-        };
+            else
+            {
+                println!("NOTICE: Extending the layout structure!");
 
-    // Add tag
-    wm_state.tree.tags.tag_element(view.get_class().to_lowercase().as_ref(), window_id);
-    let elements = wm_state.tree.get_all_element_ids();
-    wm_state.tree.tags.refresh_tag_statuses(elements);
+                if let Some(last_id) = wm_state.tree.last_window_id(){
+                    let extension = super::segmentation::Segmentation::init_horiz_50_50(&mut wm_state.tree);
+                    let new_preoccupied_id = extension.get_children()[0];
+                    let new_unoccupied_id = extension.get_children()[1];
 
-    wm_state.tree.swap_element(window_id, LayoutElement::Window(window));  
-    if let Some(element) = wm_state.tree.lookup_element(window_id)
-    {
-        
+                    // update tags according to element swap
+                    wm_state.tree.tags.handle_element_swap(last_id, new_preoccupied_id);
+
+                    if let Some(thrown_out) = wm_state.tree.swap_element(last_id, LayoutElement::Segm(extension))
+                    {
+                        wm_state.tree.swap_cell(new_preoccupied_id, thrown_out);
+                        new_unoccupied_id
+                    }
+                    else {
+                        panic!("Last index did not exist!");
+                    }
+                }
+                else{
+                    panic!("ERROR: No space in layout found!")
+                }
+            };
+
+        // Add tag
+        wm_state.tree.tags.tag_element(view.get_class().to_lowercase().as_ref(), window_id);
+
+        wm_state.tree.swap_element(window_id, LayoutElement::Window(window));  
+        if let Some(element) = wm_state.tree.lookup_element(window_id)
+        {
+            
+        }
+    
+        LayoutTree::refresh(&mut wm_state);
     }
-   
-    wm_state.tree.refresh();
 
     WM_CATCH_EVENT
 }
@@ -206,7 +200,7 @@ pub extern fn on_view_destroyed(view: WlcView) {
     let mut wm_state = WM_STATE.write().unwrap();
     
     /*
-        This will cause seg. fault for some reason:
+        TODO: This will cause seg. fault for some reason:
         let element_id = wm_state.tree.lookup_element_from_view(view.get_pid());
         wm_state.tree.swap_element(element_id, LayoutElement::None);
     */
@@ -224,8 +218,12 @@ fn get_topmost_view(output: &WlcOutput, offset: usize) -> Option<WlcView> {
     }
 }
 
-pub extern fn on_view_focus(view: WlcView, focused: bool) {
-    view.set_state(VIEW_ACTIVATED, focused);
+pub extern fn on_view_focus(view: WlcView, focused: bool) { 
+    if focused && view.get_type().is_empty(){
+        if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
+            pending_jobs.push(Job::init(JobType::FOCUS, Some(ElementReference::ViewID(view.get_pid())), Vec::new()));
+        }  
+    }
 }
 
 pub extern fn on_view_request_move(view: WlcView, origin: &Point) {

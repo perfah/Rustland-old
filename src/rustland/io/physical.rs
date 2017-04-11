@@ -92,23 +92,13 @@ extern fn on_pointer_button(view: WlcView, _time: u32, mods: &KeyboardModifiers,
             _ => {  }
         }
 
-        if !view.is_root() && mods.mods.contains(MOD_CTRL) {
+        if !view.is_root() {
+            view.focus();
+            
             if mods.mods.contains(MOD_CTRL) {
-                // Button left, we need to include linux/input.h somehow
-                //if button == 0x110 {
-                    //start_interactive_move(&view, point);
-                //}
-                //else if button == 0x111 {
-                    //start_interactive_resize(&view, ResizeEdge::empty(), point);
-                //}
-
                 return WM_CATCH_EVENT;
             }
         }
-    }
-    else {
-        //stop_interactive_action();
-    
     }
 
     WM_FORWARD_EVENT_TO_CLIENT
@@ -138,7 +128,7 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
 
         //Press F5 to force an update to the arrangement
         if sym == keysyms::KEY_F5{
-            wm_state.tree.refresh();
+            LayoutTree::refresh(&mut wm_state);
             return WM_CATCH_EVENT;
         }
 
@@ -157,7 +147,7 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
                     }
                 }
 
-                wm_state.tree.refresh();
+                LayoutTree::refresh(&mut wm_state);
                 println!("{}", wm_state.tree);
             }
 

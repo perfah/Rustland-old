@@ -4,6 +4,16 @@ use self::rustwlc::*;
 // An identifier type for elements of the layout
 pub type LayoutElemID = u16;
 
+// The PID type used for views in WLC
+pub type ViewPID = i32;
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub enum ElementReference{
+    ElementID(LayoutElemID),
+    ViewID(i32),
+    Tag(String)
+}
+
 // The maximum number of available workspaces
 pub const MAX_WORKSPACES_LIMIT: usize = 4;
 

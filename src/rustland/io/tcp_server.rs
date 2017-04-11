@@ -1,4 +1,4 @@
-use io::govern_current_job;
+use io::process_all_current_jobs;
 use common::job::JobType;
 use wmstate::{WM_STATE, PENDING_JOBS, FINALIZED_JOBS};
 use definitions::{SOCKET_PORT, SOCKET_DETERMINANT};
@@ -54,7 +54,7 @@ pub fn handle_client(mut stream: TcpStream) {
             }
         }
 
-        govern_current_job();
+        process_all_current_jobs();
 
         while let Some(job) = FINALIZED_JOBS.lock().unwrap().pop(){
             writer.write_all(serde_json::to_string(&job).unwrap().as_bytes());

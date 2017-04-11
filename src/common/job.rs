@@ -1,6 +1,8 @@
 use std::convert::From;
 use std::fmt;
 
+use definitions::{LayoutElemID, ElementReference};
+
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum JobType{
     NA,
@@ -29,17 +31,19 @@ impl fmt::Display for JobType {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Job{
     pub job_type: JobType,
-    pub head_tag: Option<String>,
-    pub contextual_tags: Vec<String>,
+    pub main_ref: Option<ElementReference>,
+    pub contextual_refs: Vec<ElementReference>,
+    pub anonymous_args: Vec<String>, 
     pub generated_result: Result<String, String>
 }
 
 impl Job{
-    pub fn init(job_type: JobType, head_tag: Option<String>, contextual_tags: Vec<String>) -> Self{
+    pub fn init(job_type: JobType, main_ref: Option<ElementReference>, contextual_refs: Vec<ElementReference>) -> Self{
         Job{
             job_type: job_type,
-            head_tag: None,
-            contextual_tags: Vec::new(),
+            main_ref: main_ref,
+            contextual_refs: contextual_refs,
+            anonymous_args: Vec::new(),
             generated_result: Err("No generated result.".to_string())
         }
     }
@@ -49,8 +53,9 @@ impl Default for Job {
     fn default() -> Self { 
         Job{
             job_type: JobType::NA, 
-            head_tag: None, 
-            contextual_tags: Vec::new(), 
+            main_ref: None, 
+            contextual_refs: Vec::new(), 
+            anonymous_args: Vec::new(),
             generated_result: Err("No generated result.".to_string())
         }
     }

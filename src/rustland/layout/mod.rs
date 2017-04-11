@@ -33,6 +33,9 @@ pub struct LayoutTree{
     // the index of the last added element
     active_id: LayoutElemID,
 
+    // the last focused layout element
+    pub focused_id: LayoutElemID,
+
     // the available workspaces of the layout 
     elements: HashMap<LayoutElemID, RefCell<LayoutElement>>,
 
@@ -44,9 +47,6 @@ pub struct LayoutTree{
 
     // rule_set: yet to be implemented
     rule_set: RefCell<Box<RuleSet>>,
-
-    // a layout element for each WlcView PID
-    view_assoc: HashMap<i32, LayoutElemID> 
 }
 
 impl LayoutTree {
@@ -56,17 +56,19 @@ impl LayoutTree {
 
         let mut tree = LayoutTree{
             active_id: PARENT_ELEMENT,  
+            focused_id: PARENT_ELEMENT,
             active_workspace: default_workspace,
             elements: HashMap::new(),
             tags: TagRegister::init(),
             outer_geometry: outer_geometry,
-            rule_set: rule_set,
-            view_assoc: HashMap::new()
+            rule_set: rule_set
         };
 
         //Place root 
         let parent_id = tree.spawn_element();
-        tree.tags.tag_element_on_condition("root", |elem_id| elem_id == PARENT_ELEMENT);
+        tree.tags.tag_element_on_condition("root", |elem_id, wm_state| elem_id == PARENT_ELEMENT);
+        tree.tags.tag_element_on_condition("focused", |elem_id, wm_state| elem_id == wm_state.tree.focused_id);
+
         let parent_element = Segmentation::init(&mut tree, no_monitors, Orientation::Horizontal);
         for child_id in parent_element.get_children(){
             let workspace = Workspace::init(&mut tree, MAX_WORKSPACES_LIMIT);
@@ -78,12 +80,12 @@ impl LayoutTree {
         tree
     }
 
-    pub fn refresh(&mut self)
+    pub fn refresh(wm_state: &mut WMState)
     {
-        let elements = self.get_all_element_ids();
-        self.tags.refresh_tag_statuses(elements);
-
-        arrangement::arrange(self, PARENT_ELEMENT, self.outer_geometry);
+        let elements = wm_state.tree.get_all_element_ids();
+        
+        TagRegister::refresh_tag_statuses(wm_state);
+        arrangement::arrange(&wm_state.tree, PARENT_ELEMENT, wm_state.tree.outer_geometry);
     }
 
     pub fn lookup_element(&self, elem_id: LayoutElemID) -> Option<RefMut<LayoutElement>>{   
@@ -107,7 +109,7 @@ impl LayoutTree {
         element_references
     }
     pub fn lookup_element_from_view(&self, view_pid: i32) -> LayoutElemID{
-        match self.view_assoc.get(&view_pid)
+        match self.tags.view_bindings.get(&view_pid)
         {
             Some(element_id) => *element_id,
             None => { panic!("Element not found!"); }
@@ -123,7 +125,7 @@ impl LayoutTree {
         match *(new_cell.borrow()){
             LayoutElement::Window(ref window) => { 
                 if let Some(view) = window.get_view(){
-                    self.view_assoc.insert(view.get_pid(), elem_id); 
+                    self.tags.view_bindings.insert(view.get_pid(), elem_id); 
                 }
             }
             _ => {}
@@ -138,7 +140,7 @@ impl LayoutTree {
             match *(old_element.borrow()){
                 LayoutElement::Window(ref window) => { 
                     if let Some(view) = window.get_view(){    
-                        self.view_assoc.remove(&view.get_pid()); 
+                        self.tags.view_bindings.remove(&view.get_pid()); 
                     }
                 }
                 _ => {}
