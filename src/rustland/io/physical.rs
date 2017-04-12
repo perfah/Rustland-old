@@ -15,6 +15,7 @@ use definitions::{WM_FORWARD_EVENT_TO_CLIENT, WM_CATCH_EVENT, LEFT_CLICK, RIGHT_
 use layout::arrangement::*;
 use layout::*;
 use layout::element::LayoutElement;
+use common::job::{Job, JobType};
 
 pub struct InputDevice {
     pub mouse_location: Point,
@@ -128,7 +129,9 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
 
         //Press F5 to force an update to the arrangement
         if sym == keysyms::KEY_F5{
-            LayoutTree::refresh(&mut wm_state);
+            if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
+                pending_jobs.push(Job::init_unconditional(JobType::LAYOUT_REFRESH));
+            } 
             return WM_CATCH_EVENT;
         }
 
@@ -147,7 +150,10 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
                     }
                 }
 
-                LayoutTree::refresh(&mut wm_state);
+                if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
+                    pending_jobs.push(Job::init_unconditional(JobType::LAYOUT_REFRESH));
+                } 
+
                 println!("{}", wm_state.tree);
             }
 

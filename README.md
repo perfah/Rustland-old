@@ -14,8 +14,9 @@ Current state
  - On-demand like creation of window layouts 
  - Very basic automatic window tiling
  - Workspaces
- - Tag system for referencing items in the layout
- - Interaction with the WM using the TCP-protocol. Rustland natively supports a set of commands which currently are the following:
+ - Tag system for referencing items in the layout, e.g. both '@focused' and '@firefox' would referemce Firefox given that it is the active application
+ - Network transparency (TCP) allows for potential interaction with the WM from various applications/platsforms. Rustland natively supports a set of commands which currently are the following (in [rlctl](#rlctl---utility) syntax):
+   - focus: Switch the focus to a specific element/location
    - tree: Sends back a list of elements in the window layout in a tree like format.
    - runapp: Executes an application to start in the focused position of the layout.
    - moveto: Moves an element in the layout to another place. 
