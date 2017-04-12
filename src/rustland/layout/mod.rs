@@ -80,10 +80,7 @@ impl LayoutTree {
         tree
     }
 
-    pub fn refresh(wm_state: &mut WMState)
-    {
-        let elements = wm_state.tree.get_all_element_ids();
-        
+    pub fn refresh(wm_state: &mut WMState){
         TagRegister::refresh_tag_statuses(wm_state);
         arrangement::arrange(&wm_state.tree, PARENT_ELEMENT, wm_state.tree.outer_geometry);
     }

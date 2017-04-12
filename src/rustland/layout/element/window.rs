@@ -76,7 +76,6 @@ impl Window{
         match self.view
         {
             Some(ref mut view) => {
-                view.set_state(VIEW_RESIZING, true);
                 view.set_geometry(ResizeEdge::empty(), 
                     // Application of inner offset
                     if let Some(inner_offet) = self.inner_offset{
@@ -95,8 +94,6 @@ impl Window{
                         self.desired_geometry
                     }
                 );
-                view.set_state(VIEW_RESIZING, false);
-                view.bring_to_front();
             },
             None => { panic!("Tried to change location of non-existing window!"); }
         }
@@ -189,8 +186,12 @@ pub extern fn on_view_created(view: WlcView) -> bool {
         {
             
         }
-    
-        LayoutTree::refresh(&mut wm_state);
+
+        if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
+            pending_jobs.push(Job::init_unconditional(JobType::LAYOUT_REFRESH));
+        } 
+
+        view.bring_to_front();
     }
 
     WM_CATCH_EVENT

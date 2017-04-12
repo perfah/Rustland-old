@@ -7,6 +7,7 @@ use wmstate::{WM_STATE, PENDING_JOBS, FINALIZED_JOBS};
 use layout::element::LayoutElement;
 use layout::arrangement;
 use layout::tag::TagRegister;
+use layout::LayoutTree;
 
 use rustwlc::handle::WlcOutput;
 use rustwlc::types::VIEW_ACTIVATED;
@@ -24,7 +25,7 @@ pub fn process_all_current_jobs(){
 
                 match job.generated_result 
                 {
-                    Ok(ref expected_result) => println!("Notice: A job described as '{}'  has been processed.", format!("{}", job.job_type).to_lowercase()),
+                    Ok(ref expected_result) => println!("Notice: A job described as '{}' has been processed.", format!("{}", job.job_type).to_lowercase()),
                     Err(ref e) => println!("Couldn't process job request: {}, cause: {}", job.job_type, e.to_lowercase())
                 }
 
@@ -78,7 +79,13 @@ fn process_job(job: &Job) -> Result<String, String>{
                 Err(String::from("Focus on what?"))
             }
         },
-        JobType::INSERT_WRKSPC => {
+        JobType::LAYOUT_REFRESH => {
+            let mut wm_state = WM_STATE.write().unwrap();
+            LayoutTree::refresh(&mut wm_state);
+
+            Ok(String::from("Layout refreshed."))
+        },
+        JobType::WORKSPACE_INSERT => {
             Err(String::from("Unimplemented :("))
         },
         JobType::RUN_APP => {
@@ -96,16 +103,16 @@ fn process_job(job: &Job) -> Result<String, String>{
         },
         JobType::SEND_TREE => Ok(format!("{}", WM_STATE.write().unwrap().tree)),
         JobType::MOVE_TO => {
-            let mut wmstate = WM_STATE.write().unwrap();
+            let mut wm_state = WM_STATE.write().unwrap();
 
             if job.main_ref.is_none() || job.contextual_refs.is_empty(){
                 Err(String::from("Move what, to where?"))
             }
             else{
-                let carry_id = wmstate.tree.tags.address_element(job.main_ref.clone().unwrap_or(ElementReference::ElementID(0))).first().cloned().unwrap_or(0);
-                let dest_id = wmstate.tree.tags.address_element(job.contextual_refs.first().cloned().unwrap_or(ElementReference::ElementID(0))).first().cloned().unwrap_or(0);
+                let carry_id = wm_state.tree.tags.address_element(job.main_ref.clone().unwrap_or(ElementReference::ElementID(0))).first().cloned().unwrap_or(0);
+                let dest_id = wm_state.tree.tags.address_element(job.contextual_refs.first().cloned().unwrap_or(ElementReference::ElementID(0))).first().cloned().unwrap_or(0);
 
-                arrangement::move_element(&mut wmstate, carry_id, dest_id)
+                arrangement::move_element(&mut wm_state, carry_id, dest_id)
             }
         }
     }

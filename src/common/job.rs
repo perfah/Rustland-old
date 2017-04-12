@@ -7,7 +7,8 @@ use definitions::{LayoutElemID, ElementReference};
 pub enum JobType{
     NA,
     FOCUS,
-    INSERT_WRKSPC,
+    LAYOUT_REFRESH,
+    WORKSPACE_INSERT,
     RUN_APP,
     SEND_TREE,
     MOVE_TO
@@ -19,7 +20,8 @@ impl fmt::Display for JobType {
         {
             JobType::NA => "N/A",
             JobType::FOCUS => "Switch the focus to a specific element/location",
-            JobType::INSERT_WRKSPC => "Insert a workspace at the focused location",
+            JobType::LAYOUT_REFRESH => "Refresh the layout for new conditions",
+            JobType::WORKSPACE_INSERT => "Insert a workspace at the focused location",
             JobType::RUN_APP => "Run a specific application",
             JobType::SEND_TREE => "Show a tree view over the layout",
             JobType::MOVE_TO => "Move an element to a specific location"
@@ -42,6 +44,16 @@ impl Job{
             job_type: job_type,
             main_ref: main_ref,
             contextual_refs: contextual_refs,
+            anonymous_args: Vec::new(),
+            generated_result: Err("No generated result.".to_string())
+        }
+    }
+
+    pub fn init_unconditional(job_type: JobType) -> Self{
+        Job{
+            job_type: job_type,
+            main_ref: None,
+            contextual_refs: Vec::new(),
             anonymous_args: Vec::new(),
             generated_result: Err("No generated result.".to_string())
         }
