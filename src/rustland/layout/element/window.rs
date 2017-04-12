@@ -221,7 +221,7 @@ fn get_topmost_view(output: &WlcOutput, offset: usize) -> Option<WlcView> {
 pub extern fn on_view_focus(view: WlcView, focused: bool) { 
     if focused && view.get_type().is_empty(){
         if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
-            pending_jobs.push(Job::init(JobType::FOCUS, Some(ElementReference::ViewID(view.get_pid())), Vec::new()));
+            pending_jobs.push(Job::init(JobType::FOCUS, Some(ElementReference::ViewPID(view.get_pid())), Vec::new()));
         }  
     }
 }

@@ -20,11 +20,11 @@ pub fn process_all_current_jobs(){
         if let Ok(mut finalized_jobs) = FINALIZED_JOBS.lock(){
             while let Some(mut job) = pending_jobs.pop(){
                 let result = process_job(&job);
-                job.generated_result = result;
+                job.generated_result =  result;
 
                 match job.generated_result 
                 {
-                    Ok(ref expected_result) => println!("Notice: An instance of a '{}' job has been processed: {}", job.job_type, expected_result.to_lowercase()),
+                    Ok(ref expected_result) => println!("Notice: A job described as '{}'  has been processed.", format!("{}", job.job_type).to_lowercase()),
                     Err(ref e) => println!("Couldn't process job request: {}, cause: {}", job.job_type, e.to_lowercase())
                 }
 
@@ -37,7 +37,7 @@ pub fn process_all_current_jobs(){
 fn process_job(job: &Job) -> Result<String, String>{
     match job.job_type
     {
-        JobType::NA => Err(String::from("Invalid job.")),
+        JobType::NA => { panic!("WTF") }
         JobType::FOCUS => {
             let mut wm_state = WM_STATE.write().unwrap();
             if let Some(ref main_ref) = job.main_ref{
@@ -47,7 +47,7 @@ fn process_job(job: &Job) -> Result<String, String>{
                             match *element
                             {
                                 LayoutElement::Window(ref window) => {
-                                    if let ElementReference::ViewID(view_pid_to_focus_on) = *main_ref{
+                                    if let ElementReference::ViewPID(view_pid_to_focus_on) = *main_ref{
                                         if let Some(view) = window.get_view().as_mut(){
                                             if view.get_pid() == view_pid_to_focus_on{
                                                 view.set_state(VIEW_ACTIVATED, true);

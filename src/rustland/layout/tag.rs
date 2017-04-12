@@ -35,7 +35,7 @@ impl TagRegister{
         match reference
         {
             ElementID(elem_id) => { vec![elem_id] },
-            ViewID(view_pid) => {
+            ViewPID(view_pid) => {
                 if let Some(elem_id) = self.view_bindings.get(&view_pid){
                     vec![*elem_id]
                 }

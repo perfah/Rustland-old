@@ -3,7 +3,7 @@ use std::fmt;
 
 use definitions::{LayoutElemID, ElementReference};
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub enum JobType{
     NA,
     FOCUS,
@@ -13,17 +13,16 @@ pub enum JobType{
     MOVE_TO
 }
 
-
 impl fmt::Display for JobType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { 
-        write!(f, "{}", match self
+        write!(f, "{}", match *self
         {
-            NA => "N/A",
-            FOCUS => "Set the focus on an element",
-            INSERT_WRKSPC => "Insert a workspace at the focused location",
-            RUN_APP => "Run application",
-            SEND_TREE => "Tree view",
-            MOVE_TO => "Element move"
+            JobType::NA => "N/A",
+            JobType::FOCUS => "Switch the focus to a specific element/location",
+            JobType::INSERT_WRKSPC => "Insert a workspace at the focused location",
+            JobType::RUN_APP => "Run a specific application",
+            JobType::SEND_TREE => "Show a tree view over the layout",
+            JobType::MOVE_TO => "Move an element to a specific location"
         })
     }
 }

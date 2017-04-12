@@ -10,7 +10,7 @@ pub type ViewPID = i32;
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum ElementReference{
     ElementID(LayoutElemID),
-    ViewID(i32),
+    ViewPID(i32),
     Tag(String)
 }
 
