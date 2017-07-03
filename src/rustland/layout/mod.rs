@@ -16,9 +16,9 @@ use rustwlc::types::*;
 use wmstate::*;
 use definitions::{LayoutElemID, MAX_WORKSPACES_LIMIT};
 use layout::element::LayoutElement;
-use layout::element::segmentation::*;
+use layout::element::bisect::*;
 use layout::element::workspace::*;
-use layout::element::segmentation::*;
+use layout::element::bisect::*;
 use layout::element::window::*;
 
 use layout::rules::*;
@@ -69,14 +69,9 @@ impl LayoutTree {
         tree.tags.tag_element_on_condition("root", |elem_id, wm_state| elem_id == PARENT_ELEMENT);
         tree.tags.tag_element_on_condition("focused", |elem_id, wm_state| elem_id == wm_state.tree.focused_id);
 
-        let parent_element = Segmentation::init(&mut tree, no_monitors, Orientation::Horizontal);
-        for child_id in parent_element.get_children(){
-            let workspace = Workspace::init(&mut tree, MAX_WORKSPACES_LIMIT);
-            tree.swap_element(*child_id, LayoutElement::Workspace(workspace));
-        }
+        let workspace = Workspace::init(&mut tree, MAX_WORKSPACES_LIMIT);
+        tree.swap_element(parent_id, LayoutElement::Workspace(workspace));
         
-        tree.swap_element(parent_id, LayoutElement::Segm(parent_element));
-
         tree
     }
 

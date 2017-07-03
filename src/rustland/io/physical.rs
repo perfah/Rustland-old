@@ -155,6 +155,7 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
                 } 
 
                 println!("{}", wm_state.tree);
+                return WM_CATCH_EVENT;
             }
 
             if sym == keysyms::KEY_c {

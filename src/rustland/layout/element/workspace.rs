@@ -10,7 +10,7 @@ use rustwlc::*;
 use wmstate::*;
 use definitions::LayoutElemID;
 use layout::*;
-use layout::element::segmentation::*;
+use layout::element::bisect::*;
 use super::LayoutElement;
 use layout::arrangement::*;
 

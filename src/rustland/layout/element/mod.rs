@@ -1,21 +1,22 @@
 pub mod workspace;
 pub mod window;
-pub mod segmentation;
+pub mod bisect;
 
 use std::fmt;
+use super::LayoutTree;
 
 pub enum LayoutElement
 {
     // Unallocated space in the layout
     None,
 
-    // A segmentation of multiple child elements
-    Segm(segmentation::Segmentation),
+    // A container of exactly two child elements
+    Bisect(bisect::Bisect),
 
-    // A passthrough container with exactly one active child element at a time
+    // A container of multiple child elements with only one active in a given moment
     Workspace(workspace::Workspace),
     
-    // Some sort of application
+    // An arbitrary window/application
     Window(window::Window)
 }
 

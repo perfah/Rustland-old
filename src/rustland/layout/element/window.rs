@@ -35,7 +35,7 @@ impl Window{
             view: Some(view),
             child_process: Some(child_process),  
             desired_geometry: Geometry::zero(),
-            inner_offset: Some(30)
+            inner_offset: None
         }
     }
 
@@ -44,7 +44,7 @@ impl Window{
             view: None,
             child_process: None,
             desired_geometry: Geometry::zero(),
-            inner_offset: Some(30)
+            inner_offset: None
         }
     }
 
@@ -98,41 +98,6 @@ impl Window{
             None => { panic!("Tried to change location of non-existing window!"); }
         }
     }
-
-    pub fn offset(&mut self, offset: &Point){
-        let pos = match self.view  
-        {
-            Some(ref view) => {
-                if let Some(geometry) = view.get_geometry(){
-                    Geometry{
-                        origin: Point{
-                            x: geometry.origin.x + offset.x,
-                            y: geometry.origin.y + offset.y
-                        },
-                        size: Size{
-                            w: 6,
-                            h: 6
-                        }
-                    }
-                }
-                else
-                {
-                    Geometry{
-                        origin: Point{x: 0, y: 0},
-                        size: Size{w: 0, h:0 }
-                    }
-                }
-            },
-            None => {
-                Geometry{
-                    origin: Point{x: 0, y: 0},
-                    size: Size{w: 0, h:0 }
-                }
-            }
-        };
-
-        self.set_desired_geometry(pos);
-    }
 }
 
 pub extern fn on_view_created(view: WlcView) -> bool {
@@ -157,14 +122,14 @@ pub extern fn on_view_created(view: WlcView) -> bool {
                 println!("NOTICE: Extending the layout structure!");
 
                 if let Some(last_id) = wm_state.tree.last_window_id(){
-                    let extension = super::segmentation::Segmentation::init_horiz_50_50(&mut wm_state.tree);
+                    let extension = super::bisect::Bisect::init_horiz_50_50(&mut wm_state.tree);
                     let new_preoccupied_id = extension.get_children()[0];
                     let new_unoccupied_id = extension.get_children()[1];
 
                     // update tags according to element swap
                     wm_state.tree.tags.handle_element_swap(last_id, new_preoccupied_id);
 
-                    if let Some(thrown_out) = wm_state.tree.swap_element(last_id, LayoutElement::Segm(extension))
+                    if let Some(thrown_out) = wm_state.tree.swap_element(last_id, LayoutElement::Bisect(extension))
                     {
                         wm_state.tree.swap_cell(new_preoccupied_id, thrown_out);
                         new_unoccupied_id

@@ -42,7 +42,7 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
     if let Some(outer_element) = tree.lookup_element(outer_element_id){
         match *outer_element
         {
-            LayoutElement::Segm(ref element) =>
+            LayoutElement::Bisect(ref element) =>
             {
                 indent(*indentation_whtspcs, f);
                 writeln!(f, "├──[{}] Segmentation: {}", outer_element_id, format_tags(outer_element_id));
@@ -104,15 +104,15 @@ pub fn find_first_empty_element(tree: &LayoutTree, outer_element_id: LayoutElemI
                 return Some(outer_element_id);
             },
             LayoutElement::Workspace(ref wrkspc) => {
-                // Recursion
+                // Recursion to another layer of depth in the tree structure
                 if let Some(candidate_id) = find_first_empty_element(tree, wrkspc.get_active_child_id()){
                     return Some(candidate_id);
                 }
             },
-            LayoutElement::Segm(ref segm) =>{
+            LayoutElement::Bisect(ref segm) =>{
                 for element_id in segm.get_children()
                 {
-                    // Recursion
+                    // Recursion to another layer of depth in the tree structure
                     if let Some(candidate_id) = find_first_empty_element(tree, *element_id){
                         return Some(candidate_id);
                     }   
@@ -128,7 +128,7 @@ pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry
     if let Some(mut outer_element) = tree.lookup_element(outer_element_id){
         match outer_element.deref_mut()
         {
-            &mut LayoutElement::Segm(ref segm) =>
+            &mut LayoutElement::Bisect(ref segm) =>
             {               
                 for (i, child_id) in segm.get_children().iter().enumerate()
                 {   
@@ -157,7 +157,7 @@ pub fn move_element(wm_state: &mut WMState, carry: LayoutElemID, destination: La
     if let Some(mut destination) = wm_state.tree.lookup_element(destination){
         match destination.deref_mut()
         {
-            &mut LayoutElement::Segm(ref mut segm) => {
+            &mut LayoutElement::Bisect(ref mut segm) => {
                 let children = segm.get_children_mut();
                 children.push(carry);
 
