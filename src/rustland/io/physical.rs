@@ -137,7 +137,7 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
 
         if mods.mods == MOD_CTRL {
             if sym == keysyms::KEY_Left || sym == keysyms::KEY_Right {
-                if let Some(mut element) = wm_state.tree.lookup_element(1) {
+                if let Some(mut element) = wm_state.tree.lookup_element(PARENT_ELEMENT) {
                     match *element{
                         LayoutElement::Workspace(ref mut wrkspc) => {
                             match sym{

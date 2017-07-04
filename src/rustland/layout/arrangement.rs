@@ -45,7 +45,7 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
             LayoutElement::Bisect(ref element) =>
             {
                 indent(*indentation_whtspcs, f);
-                writeln!(f, "├──[{}] Segmentation: {}", outer_element_id, format_tags(outer_element_id));
+                writeln!(f, "├──[{}] Bisect: {}", outer_element_id, format_tags(outer_element_id));
 
                 *indentation_whtspcs += 1;
                 for (i, child_id) in element.get_children().iter().enumerate()

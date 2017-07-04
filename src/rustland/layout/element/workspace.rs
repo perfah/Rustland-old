@@ -54,6 +54,7 @@ impl Workspace{
     }
 
     pub fn next_desktop(&mut self){
+        println!("NEXT DESKTOP");
         let active_desktop = self.active_desktop;
         self.set_active_desktop(active_desktop as i16 + 1)
     }
