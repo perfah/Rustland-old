@@ -19,7 +19,6 @@ use definitions::{ElementReference, WM_CATCH_EVENT};
 use common::job::{Job, JobType};
 use layout::*;
 use layout::arrangement::*;
-use layout::rules::*;
 use super::LayoutElement;
 
 pub struct Window {
@@ -112,45 +111,12 @@ pub extern fn on_view_created(view: WlcView) -> bool {
     window.attach_view(view);
 
     if view.get_type().is_empty(){
-        let window_id = 
-            if let Some(unoccupied_id) = find_first_empty_element(&wm_state.tree, PARENT_ELEMENT)
-            {
-                unoccupied_id
-            }
-            else
-            {
-                println!("NOTICE: Extending the layout structure!");
+        let mut layout_policy = wm_state.tree.layout_policy.clone();
+        let window_elem_id = layout_policy.attach_window(&mut wm_state.tree);
+        wm_state.tree.layout_policy = layout_policy;
 
-                if let Some(last_id) = wm_state.tree.last_window_id(){
-                    let extension = super::bisect::Bisect::init_horiz_50_50(&mut wm_state.tree);
-                    let new_preoccupied_id = extension.get_children()[0];
-                    let new_unoccupied_id = extension.get_children()[1];
-
-                    // update tags according to element swap
-                    wm_state.tree.tags.handle_element_swap(last_id, new_preoccupied_id);
-
-                    if let Some(thrown_out) = wm_state.tree.swap_element(last_id, LayoutElement::Bisect(extension))
-                    {
-                        wm_state.tree.swap_cell(new_preoccupied_id, thrown_out);
-                        new_unoccupied_id
-                    }
-                    else {
-                        panic!("Last index did not exist!");
-                    }
-                }
-                else{
-                    panic!("ERROR: No space in layout found!")
-                }
-            };
-
-        // Add tag
-        wm_state.tree.tags.tag_element(view.get_class().to_lowercase().as_ref(), window_id);
-
-        wm_state.tree.swap_element(window_id, LayoutElement::Window(window));  
-        if let Some(element) = wm_state.tree.lookup_element(window_id)
-        {
-            
-        }
+        wm_state.tree.insert_element_at(LayoutElement::Window(window), window_elem_id);  
+        wm_state.tree.tags.tag_element(view.get_class().to_lowercase().as_ref(), window_elem_id);
 
         if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
             pending_jobs.push(Job::init_unconditional(JobType::LAYOUT_REFRESH));

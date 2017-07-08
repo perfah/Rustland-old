@@ -135,14 +135,16 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
             return WM_CATCH_EVENT;
         }
 
-        if mods.mods == MOD_CTRL {
+        if mods.mods == MOD_ALT {
+            // Window manager catch modifier
+
             if sym == keysyms::KEY_Left || sym == keysyms::KEY_Right {
                 if let Some(mut element) = wm_state.tree.lookup_element(PARENT_ELEMENT) {
                     match *element{
                         LayoutElement::Workspace(ref mut wrkspc) => {
                             match sym{
                                 keysyms::KEY_Left => { wrkspc.prev_desktop(); },
-                                keysyms::KEY_Right => { wrkspc.next_desktop(); },
+                                keysyms::KEY_Right => { wrkspc.next_desktop(); }
                                 _ => {}
                             }
                         }

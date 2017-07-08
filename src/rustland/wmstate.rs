@@ -13,7 +13,6 @@ use io::physical::InputDevice;
 use layout::*;
 use layout::element::workspace::Workspace;
 use layout::arrangement::*;
-use layout::rules::*;
 use layout::tag::TagRegister;
 
 use common::definitions::FALLBACK_RESOLUTION;
@@ -33,8 +32,7 @@ lazy_static! {
         WMState{
             tree: LayoutTree::init(
                 Geometry::new(Point::origin(), FALLBACK_RESOLUTION),
-                1,
-                RefCell::new(Box::new(Circulation::init()))
+                1
             ),
             input_dev: None
         }

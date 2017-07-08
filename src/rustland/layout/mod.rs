@@ -1,7 +1,7 @@
 pub mod arrangement;
 pub mod element;
-pub mod rules;
 pub mod tag;
+pub mod policy;
 
 use std::cmp;
 use std::fmt;
@@ -20,8 +20,9 @@ use layout::element::bisect::*;
 use layout::element::workspace::*;
 use layout::element::bisect::*;
 use layout::element::window::*;
+use layout::policy::LayoutPolicy;
+use layout::policy::circulation::Circulation;
 
-use layout::rules::*;
 use layout::tag::*;
 
 pub const PARENT_ELEMENT: LayoutElemID = 0;
@@ -45,12 +46,11 @@ pub struct LayoutTree{
     // tag register used to give names to layout elements  
     pub tags: TagRegister,
 
-    // rule_set: yet to be implemented
-    rule_set: RefCell<Box<RuleSet>>,
+    pub layout_policy: Box<LayoutPolicy>
 }
 
 impl LayoutTree {
-    pub fn init(outer_geometry: Geometry, no_monitors: u16, rule_set: RefCell<Box<RuleSet>>) -> Self{
+    pub fn init(outer_geometry: Geometry, no_monitors: u16) -> Self{
         const default_workspace: u16 = 1; 
         assert!(default_workspace <= 1 as u16, "The minimum number of workspaces required are {}", default_workspace);
 
@@ -61,7 +61,7 @@ impl LayoutTree {
             elements: HashMap::new(),
             tags: TagRegister::init(),
             outer_geometry: outer_geometry,
-            rule_set: rule_set
+            layout_policy: Box::new(Circulation::init())
         };
 
         //Place root 
@@ -70,7 +70,7 @@ impl LayoutTree {
         tree.tags.tag_element_on_condition("focused", |elem_id, wm_state| elem_id == wm_state.tree.focused_id);
 
         let workspace = Workspace::init(&mut tree, MAX_WORKSPACES_LIMIT);
-        tree.swap_element(parent_id, LayoutElement::Workspace(workspace));
+        tree.insert_element_at(LayoutElement::Workspace(workspace), parent_id);
         
         tree
     }
@@ -108,12 +108,11 @@ impl LayoutTree {
         }
     }
 
-    pub fn swap_element(&mut self, elem_id: LayoutElemID, new_element: LayoutElement) -> Option<RefCell<LayoutElement>>
-    {
+    pub fn insert_element_at(&mut self, new_element: LayoutElement, elem_id: LayoutElemID) -> Option<RefCell<LayoutElement>>{
         self.swap_cell(elem_id, RefCell::new(new_element))
     }
-    pub fn swap_cell(&mut self, elem_id: LayoutElemID, new_cell: RefCell<LayoutElement>) -> Option<RefCell<LayoutElement>>
-    {
+
+    pub fn swap_cell(&mut self, elem_id: LayoutElemID, new_cell: RefCell<LayoutElement>) -> Option<RefCell<LayoutElement>>{
         match *(new_cell.borrow()){
             LayoutElement::Window(ref window) => { 
                 if let Some(view) = window.get_view(){
@@ -197,10 +196,6 @@ impl LayoutTree {
 
     pub fn set_outer_geometry(&mut self, new_geometry: Geometry){
         self.outer_geometry = new_geometry;
-    }
-
-    pub fn get_rule_set(&self) -> &RefCell<Box<RuleSet>>{
-        &self.rule_set
     }
 }
 

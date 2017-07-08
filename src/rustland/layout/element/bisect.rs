@@ -18,6 +18,14 @@ pub enum Orientation{
     Horizontal,
     Vertical,
 }
+impl Orientation{
+    pub fn opposite(&self) -> Self{
+        match *self{
+            Orientation::Horizontal => Orientation::Vertical,
+            Orientation::Vertical => Orientation::Horizontal
+        }
+    }
+}
 
 pub struct Bisect{
     children: Vec<LayoutElemID>,
@@ -47,7 +55,7 @@ impl Bisect{
             children: vec![tree.spawn_element(), tree.spawn_element()],
             orientation: Orientation::Horizontal,
             ratio: 0.5,
-            inner_padding: Some(10)
+            inner_padding: Some(60)
         }
     }
     pub fn init_vert_50_50(tree: &mut LayoutTree) -> Bisect{
@@ -82,12 +90,14 @@ impl Bisect{
                         x: outer_geometry.origin.x 
                             + child_index * (self.ratio * outer_geometry.size.w as f32) as i32
                             + if child_index == LOWER_SEGM_BOUND { padding } else { padding / 2 } as i32,
-                        y: padding as i32
+                        y: outer_geometry.origin.y
+                            + padding as i32
                     }
                 }
                 Orientation::Vertical => {
                     Point{
-                        x: padding as i32,
+                        x: outer_geometry.origin.x 
+                            + padding as i32,
                         y: outer_geometry.origin.y 
                             + child_index * (self.ratio * outer_geometry.size.h as f32) as i32
                             + if child_index == LOWER_SEGM_BOUND { padding } else { padding / 2 } as i32,

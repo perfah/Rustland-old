@@ -24,15 +24,16 @@ use wmstate::{PENDING_JOBS, FINALIZED_JOBS};
 use common::job::JobType;
 
 mod layout;
-mod io;
-use io::physical::InputDevice;
-
-pub mod wmstate;
-use wmstate::{WMState, WM_STATE};
 use layout::LayoutTree;
 use layout::arrangement::*;
+
+mod io;
+use io::physical::InputDevice;
 use io::tcp_server::handle_incoming_requests;
 use io::process_all_current_jobs;
+
+mod wmstate;
+use wmstate::{WMState, WM_STATE};
 
 fn main() {
     // The default log handler will print wlc logs to stdout

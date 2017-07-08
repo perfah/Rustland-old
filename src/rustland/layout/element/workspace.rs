@@ -54,7 +54,6 @@ impl Workspace{
     }
 
     pub fn next_desktop(&mut self){
-        println!("NEXT DESKTOP");
         let active_desktop = self.active_desktop;
         self.set_active_desktop(active_desktop as i16 + 1)
     }
@@ -63,13 +62,11 @@ impl Workspace{
         self.set_active_desktop(active_desktop as i16 - 1)
     }
 
-    pub fn get_all_children(&self) -> &Vec<LayoutElemID>
-    {
+    pub fn get_all_children(&self) -> &Vec<LayoutElemID> {
         &self.desktops
     }
 
-    pub fn get_offset(&self, tree: &LayoutTree, outer_geometry: Geometry, child: u16) -> Geometry
-    {
+    pub fn get_offset_geometry(&self, tree: &LayoutTree, outer_geometry: Geometry, child: u16) -> Geometry{
         let offset = 
             if child == self.active_desktop as u16{
                 Geometry::zero()

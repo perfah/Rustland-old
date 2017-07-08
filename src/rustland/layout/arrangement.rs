@@ -128,12 +128,12 @@ pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry
     if let Some(mut outer_element) = tree.lookup_element(outer_element_id){
         match outer_element.deref_mut()
         {
-            &mut LayoutElement::Bisect(ref segm) =>
+            &mut LayoutElement::Bisect(ref bisect) =>
             {               
-                for (i, child_id) in segm.get_children().iter().enumerate()
+                for (i, child_id) in bisect.get_children().iter().enumerate()
                 {   
                     // Recursion
-                    arrange(tree, *child_id, segm.get_offset(outer_geometry, i as i32));
+                    arrange(tree, *child_id, bisect.get_offset_geometry(outer_geometry, i as i32));
                 }
             },
             &mut LayoutElement::Workspace(ref wrkspc) =>
@@ -141,7 +141,7 @@ pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry
                 for (i, child_id) in wrkspc.get_all_children().iter().enumerate()
                 {   
                     // Recursion
-                    arrange(tree, *child_id, wrkspc.get_offset(tree, outer_geometry, i as u16));
+                    arrange(tree, *child_id, wrkspc.get_offset_geometry(tree, outer_geometry, i as u16));
                 }
             },
             &mut LayoutElement::Window(ref mut window) =>
@@ -157,8 +157,8 @@ pub fn move_element(wm_state: &mut WMState, carry: LayoutElemID, destination: La
     if let Some(mut destination) = wm_state.tree.lookup_element(destination){
         match destination.deref_mut()
         {
-            &mut LayoutElement::Bisect(ref mut segm) => {
-                let children = segm.get_children_mut();
+            &mut LayoutElement::Bisect(ref mut bisect) => {
+                let children = bisect.get_children_mut();
                 children.push(carry);
 
                 Ok(String::from("Element moved"))
