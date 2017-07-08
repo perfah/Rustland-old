@@ -40,10 +40,8 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
 
     // Use debug for LayoutElement
     if let Some(outer_element) = tree.lookup_element(outer_element_id){
-        match *outer_element
-        {
-            LayoutElement::Bisect(ref element) =>
-            {
+        match *outer_element{
+            LayoutElement::Bisect(ref element) => {
                 indent(*indentation_whtspcs, f);
                 writeln!(f, "├──[{}] Bisect: {}", outer_element_id, format_tags(outer_element_id));
 
@@ -55,10 +53,8 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
                 }
                 *indentation_whtspcs -= 1;
             },
-            LayoutElement::Workspace(ref element) =>
-            {
-                for (i, child_id) in element.get_all_children().iter().enumerate()
-                {
+            LayoutElement::Workspace(ref element) => {
+                for (i, child_id) in element.get_all_children().iter().enumerate(){
                     indent(*indentation_whtspcs, f);
 
                     if *child_id == element.get_active_child_id(){
@@ -78,8 +74,18 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
 
                 writeln!(f);
             },
-            LayoutElement::Window(ref window) =>    
-            {
+            LayoutElement::Padding(ref padding) => {
+                indent(*indentation_whtspcs, f);
+                writeln!(f, "├──[{}] Padding: {} pixels {}", outer_element_id, padding.gap_size, format_tags(outer_element_id));
+                
+                *indentation_whtspcs += 1;
+
+                //Recursion                    
+                arrangement::tree(tree, f, padding.child_elem_id, indentation_whtspcs);
+
+                *indentation_whtspcs -= 1;
+            },
+            LayoutElement::Window(ref window) => {
                 indent(*indentation_whtspcs, f);
                 write!(f, "├──[{}] Window: {}", outer_element_id, format_tags(outer_element_id));
                 
@@ -98,8 +104,7 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
 
 pub fn find_first_empty_element(tree: &LayoutTree, outer_element_id: LayoutElemID) -> Option<LayoutElemID>{
     if let Some(outer_element) =  tree.lookup_element(outer_element_id){
-        match *outer_element
-        {
+        match *outer_element{
             LayoutElement::None => {
                 return Some(outer_element_id);
             },
@@ -109,13 +114,19 @@ pub fn find_first_empty_element(tree: &LayoutTree, outer_element_id: LayoutElemI
                     return Some(candidate_id);
                 }
             },
-            LayoutElement::Bisect(ref segm) =>{
-                for element_id in segm.get_children()
+            LayoutElement::Bisect(ref bisect) =>{
+                for element_id in bisect.get_children()
                 {
                     // Recursion to another layer of depth in the tree structure
                     if let Some(candidate_id) = find_first_empty_element(tree, *element_id){
                         return Some(candidate_id);
                     }   
+                }
+            },
+            LayoutElement::Padding(ref padding) => {
+                // Recursion to another layer of depth in the tree structure
+                if let Some(candidate_id) = find_first_empty_element(tree, padding.child_elem_id){
+                    return Some(candidate_id);
                 }
             },
             _ => {}
@@ -124,28 +135,32 @@ pub fn find_first_empty_element(tree: &LayoutTree, outer_element_id: LayoutElemI
     return None;
 }
 
-pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry: Geometry){
+pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry: Geometry, stacked_padding: &mut Option<u32>){
     if let Some(mut outer_element) = tree.lookup_element(outer_element_id){
-        match outer_element.deref_mut()
-        {
-            &mut LayoutElement::Bisect(ref bisect) =>
-            {               
+        match outer_element.deref_mut(){
+            &mut LayoutElement::Bisect(ref bisect) => {               
                 for (i, child_id) in bisect.get_children().iter().enumerate()
                 {   
                     // Recursion
-                    arrange(tree, *child_id, bisect.get_offset_geometry(outer_geometry, i as i32));
+                    arrange(tree, *child_id, bisect.get_offset_geometry(outer_geometry, stacked_padding, i as i32), stacked_padding);
                 }
             },
-            &mut LayoutElement::Workspace(ref wrkspc) =>
-            {               
+            &mut LayoutElement::Workspace(ref wrkspc) => {               
                 for (i, child_id) in wrkspc.get_all_children().iter().enumerate()
                 {   
                     // Recursion
-                    arrange(tree, *child_id, wrkspc.get_offset_geometry(tree, outer_geometry, i as u16));
+                    arrange(tree, *child_id, wrkspc.get_offset_geometry(tree, outer_geometry, i as u16), stacked_padding);
                 }
             },
-            &mut LayoutElement::Window(ref mut window) =>
-            {
+            &mut LayoutElement::Padding(ref mut padding) => {
+                *stacked_padding = Some(padding.gap_size);
+                
+                // Recursion
+                arrange(tree, padding.child_elem_id, padding.get_offset_geometry(outer_geometry), stacked_padding);
+                
+                *stacked_padding = None;
+            },
+            &mut LayoutElement::Window(ref mut window) => {
                 window.set_desired_geometry(outer_geometry.clone());
             },
             _ => {}
@@ -155,8 +170,7 @@ pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry
 
 pub fn move_element(wm_state: &mut WMState, carry: LayoutElemID, destination: LayoutElemID) -> Result<String, String>{
     if let Some(mut destination) = wm_state.tree.lookup_element(destination){
-        match destination.deref_mut()
-        {
+        match destination.deref_mut() {
             &mut LayoutElement::Bisect(ref mut bisect) => {
                 let children = bisect.get_children_mut();
                 children.push(carry);

@@ -1,6 +1,7 @@
 pub mod workspace;
 pub mod window;
 pub mod bisect;
+pub mod padding;
 
 use std::fmt;
 use super::LayoutTree;
@@ -16,6 +17,9 @@ pub enum LayoutElement
     // A container of multiple child elements with only one active in a given moment
     Workspace(workspace::Workspace),
     
+    // A container that can be smaller in relation to the outside geometry 
+    Padding(padding::Padding),
+
     // An arbitrary window/application
     Window(window::Window)
 }

@@ -29,9 +29,8 @@ impl Orientation{
 
 pub struct Bisect{
     children: Vec<LayoutElemID>,
-    orientation: Orientation,
-    ratio: f32,
-    inner_padding: Option<u32>
+    pub orientation: Orientation,
+    pub ratio: f32
 }
 
 impl Bisect{
@@ -46,24 +45,21 @@ impl Bisect{
         Bisect{
             children: children,
             orientation: orientation,
-            ratio: 1.0 / no_partitions as f32,
-            inner_padding: Some(10)
+            ratio: 1.0 / no_partitions as f32
         }
     }
     pub fn init_horiz_50_50(tree: &mut LayoutTree) -> Bisect{
         Bisect{
             children: vec![tree.spawn_element(), tree.spawn_element()],
             orientation: Orientation::Horizontal,
-            ratio: 0.5,
-            inner_padding: Some(60)
+            ratio: 0.5
         }
     }
     pub fn init_vert_50_50(tree: &mut LayoutTree) -> Bisect{
         Bisect{
             children: vec![tree.spawn_element(), tree.spawn_element()],
             orientation: Orientation::Vertical,
-            ratio: 0.5,
-            inner_padding: Some(10)
+            ratio: 0.5
         }
     }
 
@@ -80,8 +76,8 @@ impl Bisect{
         self.orientation
     }
 
-    pub fn get_offset(&self, outer_geometry: Geometry, child_index: i32) -> Geometry{
-        let padding = self.inner_padding.unwrap_or(0 as u32);
+    pub fn get_offset_geometry(&self, outer_geometry: Geometry, stacked_padding: &Option<u32>, child_index: i32) -> Geometry{
+        let padding = (*stacked_padding).unwrap_or(0 as u32);
 
         Geometry{
             origin: match self.orientation{
@@ -89,18 +85,16 @@ impl Bisect{
                     Point{
                         x: outer_geometry.origin.x 
                             + child_index * (self.ratio * outer_geometry.size.w as f32) as i32
-                            + if child_index == LOWER_SEGM_BOUND { padding } else { padding / 2 } as i32,
+                            + if child_index == LOWER_SEGM_BOUND { 0 } else { padding / 2 } as i32,
                         y: outer_geometry.origin.y
-                            + padding as i32
                     }
                 }
                 Orientation::Vertical => {
                     Point{
-                        x: outer_geometry.origin.x 
-                            + padding as i32,
+                        x: outer_geometry.origin.x,
                         y: outer_geometry.origin.y 
                             + child_index * (self.ratio * outer_geometry.size.h as f32) as i32
-                            + if child_index == LOWER_SEGM_BOUND { padding } else { padding / 2 } as i32,
+                            + if child_index == LOWER_SEGM_BOUND { 0 } else { padding / 2 } as i32,
                     }
                 }
             },
@@ -108,14 +102,14 @@ impl Bisect{
             {
                 Orientation::Horizontal => {  
                     Size{
-                        w: (self.ratio * outer_geometry.size.w as f32) as u32 - 3 * padding / 2,
-                        h: outer_geometry.size.h - 2*padding
+                        w: (self.ratio * outer_geometry.size.w as f32) as u32 - padding / 2,
+                        h: outer_geometry.size.h
                     }
                 }
                 Orientation::Vertical => {
                     Size{
-                        w: outer_geometry.size.w - 2*padding,
-                        h: (self.ratio * outer_geometry.size.h as f32) as u32 - 3 * padding / 2
+                        w: outer_geometry.size.w,
+                        h: (self.ratio * outer_geometry.size.h as f32) as u32 - padding / 2
                     }
                 }
             }

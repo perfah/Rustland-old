@@ -15,10 +15,14 @@ use definitions::{WM_FORWARD_EVENT_TO_CLIENT, WM_CATCH_EVENT, LEFT_CLICK, RIGHT_
 use layout::arrangement::*;
 use layout::*;
 use layout::element::LayoutElement;
+use layout::element::bisect::Orientation;
 use common::job::{Job, JobType};
 
 pub struct InputDevice {
     pub mouse_location: Point,
+    pub left_click: ButtonState,
+    pub right_click: ButtonState,
+
     pub resizing: bool
 }
 
@@ -30,6 +34,8 @@ impl InputDevice{
                 x: 0,
                 y: 0
             },
+            left_click: ButtonState::Released,
+            right_click: ButtonState::Released,
             resizing: false
         }
     }
@@ -46,6 +52,8 @@ impl InputDevice{
                 x: 0,
                 y: 0
             },
+            left_click: ButtonState::Released,
+            right_click: ButtonState::Released,
             resizing: false
         }
     }
@@ -61,9 +69,11 @@ impl InputDevice{
 pub extern fn on_pointer_motion(_in_view: WlcView, _time: u32, point: &Point) -> bool {
     let mut wm_state = WM_STATE.write().unwrap();
 
+    let (mut dx, mut dy) = (0, 0);
+    let mut active_right_click = false;
     if let Some(ref mut input_dev) = wm_state.input_dev{
-        let dx = point.x - input_dev.mouse_location.x;
-        let dy = point.y - input_dev.mouse_location.y;
+        dx = point.x - input_dev.mouse_location.x;
+        dy = point.y - input_dev.mouse_location.y;
 
         input_dev.mouseTravel(
             Point{
@@ -71,7 +81,37 @@ pub extern fn on_pointer_motion(_in_view: WlcView, _time: u32, point: &Point) ->
                 y: dy
             }
         );
+
+        active_right_click = input_dev.right_click == ButtonState::Pressed;
     }
+
+    //if mods.mods == MOD_ALT {
+        if active_right_click{
+            let instrument_elements = wm_state.tree.tags.address_element_by_tag(String::from("instrument_drag"));
+            
+            for elem_id in instrument_elements{
+                if let Some(mut element) = wm_state.tree.lookup_element(elem_id){
+                    match *element{
+                        LayoutElement::Bisect(ref mut bisect) => {
+                            match bisect.orientation{
+                                Orientation::Horizontal => {
+                                    bisect.ratio += dx as f32 / (wm_state.tree.get_outer_geometry().size.w as f32);
+                                },
+                                Orientation::Vertical => {
+                                    bisect.ratio += dy as f32 / (wm_state.tree.get_outer_geometry().size.h) as f32;
+                                },
+                                
+                                // x / screen = ratio*element_size / element_size
+                                // ratio = x / screen
+                                // 
+                            }
+                        },
+                        _ => {}
+                    }
+                }
+            }
+        }
+    //}
 
     // Note: Forward is REQUIRED for input to be registered by clients
     WM_FORWARD_EVENT_TO_CLIENT
@@ -86,18 +126,28 @@ pub extern fn pointer_scroll(_view: WlcView, _time: u32,
 extern fn on_pointer_button(view: WlcView, _time: u32, mods: &KeyboardModifiers, button: u32, state: ButtonState, point: &Point) -> bool {
     use std::process::Command;
 
-    if state == ButtonState::Pressed {
-        match button{
-            LEFT_CLICK => {  },
-            RIGHT_CLICK => { },
-            _ => {  }
-        }
+    let mut wm_state = WM_STATE.write().unwrap();
+    if let Some(ref mut input_dev) = wm_state.input_dev{
+        input_dev.left_click = ButtonState::Released;
+        input_dev.right_click = ButtonState::Released;
+    
+        if state == ButtonState::Pressed {
+            match button{
+                LEFT_CLICK => { 
+                    input_dev.left_click = ButtonState::Pressed; 
+                },
+                RIGHT_CLICK => {
+                    input_dev.right_click = ButtonState::Pressed;
+                },
+                _ => {  }
+            }
 
-        if !view.is_root() {
-            view.focus();
-            
-            if mods.mods.contains(MOD_CTRL) {
-                return WM_CATCH_EVENT;
+            if !view.is_root() {
+                view.focus();
+                
+                if mods.mods.contains(MOD_CTRL) {
+                    return WM_CATCH_EVENT;
+                }
             }
         }
     }

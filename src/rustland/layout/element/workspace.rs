@@ -11,7 +11,9 @@ use wmstate::*;
 use definitions::LayoutElemID;
 use layout::*;
 use layout::element::bisect::*;
+use layout::element::padding::Padding;
 use super::LayoutElement;
+
 use layout::arrangement::*;
 
 pub struct Workspace{
@@ -25,7 +27,11 @@ impl Workspace{
         
         let mut children: Vec<LayoutElemID> = Vec::new();
         for i in 0..no_partitions{
-            children.push(tree.spawn_element())
+            let spawned_id = tree.spawn_element();
+            let padding = Padding::init(tree, 15);
+
+            children.push(spawned_id);
+            tree.insert_element_at(LayoutElement::Padding(padding), spawned_id);
         }
         
         Workspace{

@@ -116,7 +116,14 @@ pub extern fn on_view_created(view: WlcView) -> bool {
         wm_state.tree.layout_policy = layout_policy;
 
         wm_state.tree.insert_element_at(LayoutElement::Window(window), window_elem_id);  
-        wm_state.tree.tags.tag_element(view.get_class().to_lowercase().as_ref(), window_elem_id);
+        
+        let mut tag = view.get_class().to_lowercase();
+        if tag.is_empty(){
+            tag = view.get_title().split_whitespace().next().unwrap_or("").to_lowercase();
+        }
+        if !tag.is_empty(){
+            wm_state.tree.tags.tag_element(tag.as_ref(), window_elem_id);
+        }
 
         if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
             pending_jobs.push(Job::init_unconditional(JobType::LAYOUT_REFRESH));

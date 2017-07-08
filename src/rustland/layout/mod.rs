@@ -77,7 +77,9 @@ impl LayoutTree {
 
     pub fn refresh(wm_state: &mut WMState){
         TagRegister::refresh_tag_statuses(wm_state);
-        arrangement::arrange(&wm_state.tree, PARENT_ELEMENT, wm_state.tree.outer_geometry);
+        
+        let mut stacked_padding: Option<u32> = None; 
+        arrangement::arrange(&wm_state.tree, PARENT_ELEMENT, wm_state.tree.outer_geometry, &mut stacked_padding);
     }
 
     pub fn lookup_element(&self, elem_id: LayoutElemID) -> Option<RefMut<LayoutElement>>{   
