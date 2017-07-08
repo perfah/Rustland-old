@@ -8,11 +8,14 @@ What is Rustland?
   
   Rustland is currently in the alpha stage so it will probably not fit your needs just yet.
 
-Current state
+  <img align="right" width="549" height="361" src="https://i.gyazo.com/9d8d6f9d7956d11e958c4dbd7154b497.png">
+
+Current state 
 -------------
 
  - On-demand like creation of window layouts 
- - Very basic automatic window tiling
+ - Automatic circular window tiling
+ - Layout gap of 15 pixels
  - Workspaces
  - Tag system for referencing items in the layout, e.g. both '@focused' and '@firefox' would reference Firefox given that it is the active application
  - Network transparency (TCP) allows for potential interaction with the WM from various applications/platsforms. Rustland natively supports a set of commands which currently are the following (in [rlctl](#rlctl---utility) syntax):
