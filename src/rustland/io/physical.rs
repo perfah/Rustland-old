@@ -85,34 +85,6 @@ pub extern fn on_pointer_motion(_in_view: WlcView, _time: u32, point: &Point) ->
         active_right_click = input_dev.right_click == ButtonState::Pressed;
     }
 
-    //if mods.mods == MOD_ALT {
-        if active_right_click{
-            let instrument_elements = wm_state.tree.tags.address_element_by_tag(String::from("instrument_drag"));
-            
-            for elem_id in instrument_elements{
-                if let Some(mut element) = wm_state.tree.lookup_element(elem_id){
-                    match *element{
-                        LayoutElement::Bisect(ref mut bisect) => {
-                            match bisect.orientation{
-                                Orientation::Horizontal => {
-                                    bisect.ratio += dx as f32 / (wm_state.tree.get_outer_geometry().size.w as f32);
-                                },
-                                Orientation::Vertical => {
-                                    bisect.ratio += dy as f32 / (wm_state.tree.get_outer_geometry().size.h) as f32;
-                                },
-                                
-                                // x / screen = ratio*element_size / element_size
-                                // ratio = x / screen
-                                // 
-                            }
-                        },
-                        _ => {}
-                    }
-                }
-            }
-        }
-    //}
-
     // Note: Forward is REQUIRED for input to be registered by clients
     WM_FORWARD_EVENT_TO_CLIENT
 }
