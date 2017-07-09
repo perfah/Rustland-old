@@ -4,7 +4,8 @@ Rustland
 What is Rustland?
 -----------------
 
-  A **work-in-progress** tiling Wayland compositor written in Rust with the aim of flexibility and powerful customizability. 
+  A **work-in-progress** window manager, or more specifically a
+  compositor for the Wayland protocol, with features such as automatic window tiling and interactivity over tcp. Rustland is written in Rust and is aiming for flexibility and powerful customization.
   
   Rustland is currently in the alpha stage so it will probably not fit your needs just yet.
 
