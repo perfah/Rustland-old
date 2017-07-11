@@ -1,4 +1,5 @@
 #![feature(box_syntax, box_patterns)]
+#![feature(associated_consts)]
 #[allow(inaccessible_extern_crate)]
 
 use std::sync::RwLock;
@@ -18,6 +19,8 @@ pub extern crate serde_json;
 pub extern crate rustwlc;
 use rustwlc::*;
 
+pub extern crate num;
+
 extern crate common;
 use common::definitions;
 use wmstate::{PENDING_JOBS, FINALIZED_JOBS};
@@ -31,6 +34,8 @@ mod io;
 use io::physical::InputDevice;
 use io::tcp_server::handle_incoming_requests;
 use io::process_all_current_jobs;
+
+mod utils;
 
 mod wmstate;
 use wmstate::{WMState, WM_STATE};
