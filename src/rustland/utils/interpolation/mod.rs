@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use num::{abs, FromPrimitive};
 
-pub mod presets;
+pub mod methods;
 
 trait InterpolationMethod{
     const left_bound: f32;
