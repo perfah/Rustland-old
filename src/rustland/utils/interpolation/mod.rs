@@ -10,8 +10,8 @@ trait InterpolationMethod{
     fn interpolate(x: f32) -> f32;
 }
 
-struct NumericInterpolation<I: InterpolationMethod>{
-    interpolation_method: PhantomData<I>,
+struct NumericInterpolation<M: InterpolationMethod>{
+    interpolation_method: PhantomData<M>,
     start_pole: f32,
     end_pole: f32, 
     linear_iterations: u32,
@@ -66,7 +66,7 @@ mod test{
         let (start_pole, end_pole) = (0f32, 100f32);
 
         /*
-            Run with '--nocapture' as argument for a visual demonstration of the quad.
+            Run with '--nocapture' as argument for a visual demonstration.
             linear: l(x) = x, 
             quad: q(x) = x*x
             x = 1 <=> l(x) = q(x) 
