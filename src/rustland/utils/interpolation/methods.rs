@@ -6,7 +6,7 @@ impl InterpolationMethod for LinearInterpolator{
     const left_bound: f32 = 0f32;
     const right_bound: f32 = 10f32;
 
-    fn interpolate(x: f32) -> f32 { x }
+    fn interpolate(&self, x: f32) -> f32 { x }
 }
 
 /// An interpolation method that accelerates the motion quadratically.
@@ -15,7 +15,7 @@ impl InterpolationMethod for QuadraticInterpolator{
     const left_bound: f32 = 0f32;
     const right_bound: f32 = 10f32;
 
-    fn interpolate(x: f32) -> f32 { x * x }
+    fn interpolate(&self, x: f32) -> f32 { x * x }
 }
 
 /// An interpolation method that decelerates the motion.
@@ -24,5 +24,5 @@ impl InterpolationMethod for DecelerationInterpolator{
     const left_bound: f32 = 0f32;
     const right_bound: f32 = 1.57f32;
 
-    fn interpolate(x: f32) -> f32 { x.sin() }
+    fn interpolate(&self, x: f32) -> f32 { x.sin() }
 }
