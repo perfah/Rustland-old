@@ -1,5 +1,6 @@
 #![feature(box_syntax, box_patterns)]
 #![feature(associated_consts)]
+#![feature(use_extern_macros)] 
 #[allow(inaccessible_extern_crate)]
 
 use std::sync::RwLock;
@@ -9,17 +10,15 @@ use std::io::Read;
 use std::thread::{spawn, sleep};
 use std::time;
 
-#[macro_use]
-pub extern crate lazy_static;
-#[macro_use]
-pub extern crate serde_derive;
-#[macro_use]
-pub extern crate serde_json;
+#[macro_use] pub extern crate lazy_static;
+#[macro_use] pub extern crate serde_derive;
+#[macro_use] pub extern crate serde_json;
 
 pub extern crate rustwlc;
 use rustwlc::*;
 
 pub extern crate num;
+pub extern crate num_traits;
 
 extern crate common;
 use common::definitions;
@@ -29,6 +28,7 @@ use common::job::JobType;
 mod layout;
 use layout::LayoutTree;
 use layout::arrangement::*;
+use layout::property::PropertyProvider;
 
 mod io;
 use io::physical::InputDevice;
@@ -76,5 +76,5 @@ pub extern fn compositor_ready()
             sleep(time::Duration::from_millis(10));
             process_all_current_jobs();
         }
-    });
+    });    
 }

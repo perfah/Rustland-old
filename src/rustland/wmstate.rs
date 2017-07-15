@@ -2,10 +2,11 @@ extern crate serde;
 extern crate serde_json;
 use self::serde_json::Map;
 
-use std::sync::{RwLock, Mutex};
+use std::sync::{Arc, RwLock, Mutex};
 use std::marker::Sync;
 use std::cell::{RefCell, RefMut};
 use std::net::TcpListener;
+use std::collections::HashMap;
 
 use rustwlc::*;
 use io::physical::InputDevice;
@@ -20,7 +21,7 @@ use common::job::Job;
 
 pub struct WMState{
     pub tree: LayoutTree,
-    pub input_dev: Option<InputDevice>,
+    pub input_dev: Option<InputDevice>
 }
 
 

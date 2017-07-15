@@ -1,6 +1,3 @@
-//extern crate num;
-//use num::rational::Ratio;
-
 use std::borrow::BorrowMut;
 use std::sync::MutexGuard;
 use std::collections::VecDeque;
@@ -13,7 +10,7 @@ use super::*;
 use wmstate::*;
 use super::element::*;
 use super::element::window::*;
-use definitions::{TAG_PREFIX, LayoutElemID};
+use definitions::{TAG_PREFIX, PROPERTY_PREFIX, LayoutElemID};
 
 
 /// Arrangement  
@@ -31,19 +28,43 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
         
         for tag in tree.tags.address_tags_by_element(elem_id){
             output.push_str(TAG_PREFIX);
-            output.push_str(tag.as_ref());
+            output.push_str(tag.as_str());
             output.push_str(" ");
         }
 
         output
     };
 
+    let format_props = |elem_id, elem: &mut RefMut<LayoutElement>|{
+        let mut output = String::new();
+
+        if let Some(property_bank) = tree.get_element_properties(elem_id){
+            for property_name in property_bank.get_all_property_names(){
+                (*elem).set_property(tree, outer_element_id, property_name.clone(), 0f32);
+
+                if let Some(property_value) = (*elem).get_property(tree, outer_element_id, property_name.clone()){
+                    output.push_str(PROPERTY_PREFIX);
+                    output.push_str(property_name.as_str());
+                    output.push_str("=");
+                    output.push_str(format!("{}", property_value).as_str());
+                }
+                
+                output.push_str(" ");
+            }
+        }
+
+        output
+    };
+
     // Use debug for LayoutElement
-    if let Some(outer_element) = tree.lookup_element(outer_element_id){
+    if let Some(mut outer_element) = tree.lookup_element(outer_element_id){
+        let tags = format_tags(outer_element_id);
+        let props = format_props(outer_element_id, &mut outer_element);
+
         match *outer_element{
             LayoutElement::Bisect(ref element) => {
                 indent(*indentation_whtspcs, f);
-                writeln!(f, "├──[{}] Bisect: {}", outer_element_id, format_tags(outer_element_id));
+                writeln!(f, "├──[{}] Bisect: {} {}", outer_element_id, tags, props);
 
                 *indentation_whtspcs += 1;
                 for (i, child_id) in element.get_children().iter().enumerate()
@@ -58,10 +79,10 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
                     indent(*indentation_whtspcs, f);
 
                     if *child_id == element.get_active_child_id(){
-                        writeln!(f, "├──[{}] Workspace [{}]: {}", outer_element_id, i, format_tags(outer_element_id));
+                        writeln!(f, "├──[{}] Workspace [{}]: {} {}", outer_element_id, i, tags, props);
                     }
                     else{
-                        writeln!(f, "├──[{}] Workspace  {}: {}", outer_element_id, i, format_tags(outer_element_id));
+                        writeln!(f, "├──[{}] Workspace  {}: {} {}", outer_element_id, i, tags, props);
                     }
 
                     *indentation_whtspcs += 1;
@@ -76,7 +97,7 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
             },
             LayoutElement::Padding(ref padding) => {
                 indent(*indentation_whtspcs, f);
-                writeln!(f, "├──[{}] Padding: {} pixels {}", outer_element_id, padding.gap_size, format_tags(outer_element_id));
+                writeln!(f, "├──[{}] Padding: {} {}", outer_element_id, tags, props);
                 
                 *indentation_whtspcs += 1;
 
@@ -87,7 +108,7 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
             },
             LayoutElement::Window(ref window) => {
                 indent(*indentation_whtspcs, f);
-                write!(f, "├──[{}] Window: {}", outer_element_id, format_tags(outer_element_id));
+                write!(f, "├──[{}] Window: {} {}", outer_element_id, tags, props);
                 
                 if tree.get_outer_geometry().contains_geometry(window.get_desired_geometry()){
                     write!(f, "[{}]", window.get_desired_geometry());
@@ -96,7 +117,7 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
             },
             LayoutElement::None => {
                 indent(*indentation_whtspcs, f);
-                writeln!(f, "├──[{}] Unoccupied", outer_element_id);
+                writeln!(f, "├──[{}] Unoccupied: {}", outer_element_id, tags);
             }
         }  
     }

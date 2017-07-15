@@ -1,27 +1,29 @@
 use std::marker::PhantomData;
 use num::{abs, FromPrimitive};
 
+use common::definitions::DefaultNumericType;
+
 pub mod methods;
 
-trait InterpolationMethod{
-    const left_bound: f32;
-    const right_bound: f32;
+pub trait InterpolationMethod{
+    const left_bound: DefaultNumericType;
+    const right_bound: DefaultNumericType;
 
-    fn interpolate(&self, x: f32) -> f32;
-    fn get_left_bound(&self) -> f32 { Self::left_bound }
-    fn get_right_bound(&self) -> f32 { Self::right_bound }
+    fn interpolate(&self, x: DefaultNumericType) -> DefaultNumericType;
+    fn get_left_bound(&self) -> DefaultNumericType { Self::left_bound }
+    fn get_right_bound(&self) -> DefaultNumericType { Self::right_bound }
 }
 
-struct NumericInterpolation{
+pub struct NumericInterpolation{
     interpolation_method: Box<InterpolationMethod>,
-    start_pole: f32,
-    end_pole: f32, 
-    linear_iterations: u32,
-    internal_progression: f32
+    start_pole: DefaultNumericType,
+    end_pole: DefaultNumericType, 
+    linear_iterations: DefaultNumericType,
+    internal_progression: DefaultNumericType
 }
 
 impl NumericInterpolation{
-    pub fn new(interpolation_method: Box<InterpolationMethod>, start_pole: f32, end_pole: f32, linear_iterations: u32) -> NumericInterpolation{
+    pub fn new(interpolation_method: Box<InterpolationMethod>, start_pole: DefaultNumericType, end_pole: DefaultNumericType, linear_iterations: DefaultNumericType) -> NumericInterpolation{
          let (left_bound, right_bound) = (interpolation_method.get_left_bound(), interpolation_method.get_right_bound());
         
         assert!(left_bound < right_bound, "The left bound number must be smaller than the right!");
@@ -56,7 +58,7 @@ impl NumericInterpolation{
         }
     }
 
-    pub fn reset(&mut self, ){
+    pub fn reset(&mut self){
         self.internal_progression = 0f32;
     }
 }

@@ -1,3 +1,5 @@
+#[macro_use] pub mod property;
+
 pub mod arrangement;
 pub mod element;
 pub mod tag;
@@ -10,6 +12,8 @@ use std::cell::*;
 use std::cell::*;
 use std::sync::RwLock;
 use std::rc::Rc;
+use std::borrow::BorrowMut;
+use std::ops::Deref;
 
 use rustwlc::handle::*;
 use rustwlc::types::*;
@@ -22,6 +26,10 @@ use layout::element::bisect::*;
 use layout::element::window::*;
 use layout::policy::LayoutPolicy;
 use layout::policy::circulation::Circulation;
+use layout::property::{PropertyProvider, PropertyBank};
+
+use utils::interpolation::NumericInterpolation;
+use utils::interpolation::methods::LinearInterpolator;
 
 use layout::tag::*;
 
@@ -46,7 +54,9 @@ pub struct LayoutTree{
     // tag register used to give names to layout elements  
     pub tags: TagRegister,
 
-    pub layout_policy: Box<LayoutPolicy>
+    pub layout_policy: Box<LayoutPolicy>,
+
+    properties: HashMap<LayoutElemID, PropertyBank>
 }
 
 impl LayoutTree {
@@ -61,7 +71,8 @@ impl LayoutTree {
             elements: HashMap::new(),
             tags: TagRegister::init(),
             outer_geometry: outer_geometry,
-            layout_policy: Box::new(Circulation::init())
+            layout_policy: Box::new(Circulation::init()),
+            properties: HashMap::new()
         };
 
         //Place root 
@@ -89,6 +100,7 @@ impl LayoutTree {
             None => { panic!("Element out of reach.") }
         }
     }
+
     pub fn lookup_element_by_tag(&self, tag: String) -> Vec<RefMut<LayoutElement>>{   
         let mut element_references = Vec::<RefMut<LayoutElement>>::new();
         
@@ -111,6 +123,8 @@ impl LayoutTree {
     }
 
     pub fn insert_element_at(&mut self, new_element: LayoutElement, elem_id: LayoutElemID) -> Option<RefCell<LayoutElement>>{
+        new_element.register_properties(self.properties.get_mut(&elem_id).expect("An element with this has not spawned?!"));
+
         self.swap_cell(elem_id, RefCell::new(new_element))
     }
 
@@ -123,6 +137,8 @@ impl LayoutTree {
             }
             _ => {}
         }
+
+        (*new_cell.borrow()).register_properties(self.properties.get_mut(&elem_id).expect("An element with this has not spawned?!"));
 
         let old_cell = self.elements.insert(
             elem_id, 
@@ -145,8 +161,9 @@ impl LayoutTree {
 
     pub fn spawn_element(&mut self) -> LayoutElemID{
         self.elements.insert(self.active_id, RefCell::new(LayoutElement::None));
-        self.active_id += 1;
+        self.properties.insert(self.active_id, PropertyBank::new());
 
+        self.active_id += 1;
         return self.active_id - 1;
     } 
 
@@ -199,6 +216,27 @@ impl LayoutTree {
     pub fn set_outer_geometry(&mut self, new_geometry: Geometry){
         self.outer_geometry = new_geometry;
     }
+
+    pub fn get_element_properties(&self, elem_id: LayoutElemID) -> Option<&PropertyBank>{
+        self.properties.get(&elem_id)
+    }
+
+/*
+    fn animate<T: AnimatedObject>(&self, element_id: LayoutElemID, destination: u32) -> Animation{
+        let origin_value = 
+            if let Some(element) = self.lookup_element(element_id){
+                *((element.borrow_mut() as &mut AnimatedObject).find_value())
+            }
+            else{
+                destination
+            };
+
+        Animation{
+            element_id: element_id,
+            interpolation: NumericInterpolation::new(box LinearInterpolator{}, origin_value, 1f32, 100)
+        }
+    }
+    */
 }
 
 impl fmt::Display for LayoutTree{

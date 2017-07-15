@@ -146,6 +146,7 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
         if sym == keysyms::KEY_F3{
             println!();
             println!("~ Layout structure ~\n{}", wm_state.tree);
+            
             return WM_CATCH_EVENT;
         }
 

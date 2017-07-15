@@ -1,7 +1,13 @@
-use common::definitions::LayoutElemID;
+use num::traits::{NumCast,ToPrimitive};
+use std::collections::HashMap;
+
+use common::definitions::{DefaultNumericType, LayoutElemID};
 use layout::LayoutTree;
+use layout::element::LayoutElement;
+use layout::property::{PropertyProvider, PropertyBank};
 
 use rustwlc::*;
+use num::traits::cast;
 
 pub struct Padding{
     pub child_elem_id: LayoutElemID,
@@ -27,5 +33,11 @@ impl Padding{
                 h: outer_geometry.size.h - 2 * self.gap_size
             }
         }
+    }
+}
+
+impl PropertyProvider for Padding{
+    fn register_properties(&self, property_bank: &mut PropertyBank){    
+        property_bank.address_property("gap_size".to_string(), make_property_handle!(Padding, gap_size, u32));
     }
 }
