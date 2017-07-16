@@ -37,7 +37,7 @@ macro_rules! make_property_handle{
     })
 }
 
-pub trait PropertyProvider{
+pub trait ElementPropertyProvider{
     fn register_properties(&self, property_bank: &mut PropertyBank);
     fn get_property(&mut self, tree: &LayoutTree, elem_id: LayoutElemID, name: String) -> Option<DefaultNumericType>{
         None

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use common::definitions::{DefaultNumericType, LayoutElemID};
 use layout::LayoutTree;
 use layout::element::LayoutElement;
-use layout::property::{PropertyProvider, PropertyBank};
+use layout::property::{ElementPropertyProvider, PropertyBank};
 
 use rustwlc::*;
 use num::traits::cast;
@@ -39,7 +39,7 @@ impl Padding{
     }
 }
 
-impl PropertyProvider for Padding{
+impl ElementPropertyProvider for Padding{
     fn register_properties(&self, property_bank: &mut PropertyBank){    
         property_bank.address_property("gap_size".to_string(), make_property_handle!(Padding, u32, gap_size));
 

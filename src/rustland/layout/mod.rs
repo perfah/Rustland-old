@@ -26,7 +26,7 @@ use layout::element::bisect::*;
 use layout::element::window::*;
 use layout::policy::LayoutPolicy;
 use layout::policy::circulation::Circulation;
-use layout::property::{PropertyProvider, PropertyBank};
+use layout::property::{ElementPropertyProvider, PropertyBank};
 
 use utils::interpolation::NumericInterpolation;
 use utils::interpolation::methods::LinearInterpolator;
@@ -79,7 +79,7 @@ impl LayoutTree {
         let parent_id = tree.spawn_element();
         tree.tags.tag_element_on_condition("root", |elem_id, wm_state| elem_id == PARENT_ELEMENT);
         tree.tags.tag_element_on_condition("focused", |elem_id, wm_state| elem_id == wm_state.tree.focused_id);
-        
+
         let workspace = Workspace::init(&mut tree, MAX_WORKSPACES_LIMIT);
         tree.insert_element_at(LayoutElement::Workspace(workspace), parent_id);
         

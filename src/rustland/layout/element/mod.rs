@@ -4,7 +4,7 @@ use num::traits::ToPrimitive;
 
 use common::definitions::LayoutElemID;
 use layout::LayoutTree;
-use layout::property::{PropertyProvider, PropertyBank};
+use layout::property::{ElementPropertyProvider, PropertyBank};
 use wmstate::WMState;
 
 pub mod workspace;
@@ -31,7 +31,7 @@ pub enum LayoutElement{
     Window(window::Window)
 }
 
-impl PropertyProvider for LayoutElement{
+impl ElementPropertyProvider for LayoutElement{
     fn register_properties(&self, property_bank: &mut PropertyBank){
         match self{
             &Bisect(ref bisect) => {},

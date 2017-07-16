@@ -28,7 +28,7 @@ use common::job::JobType;
 mod layout;
 use layout::LayoutTree;
 use layout::arrangement::*;
-use layout::property::PropertyProvider;
+use layout::property::ElementPropertyProvider;
 
 mod io;
 use io::physical::InputDevice;
