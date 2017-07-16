@@ -18,17 +18,18 @@ use layout::arrangement::*;
 
 pub struct Workspace{
     active_desktop: usize,
+    desktops_on_each_row: i32,
     desktops: Vec<LayoutElemID> 
 }
 
 impl Workspace{
-    pub fn init(tree: &mut LayoutTree, no_partitions: usize) -> Workspace{
+    pub fn init(tree: &mut LayoutTree, desktops_on_each_row: i32, no_partitions: usize) -> Workspace{
         assert!(no_partitions > 0, "A workspace element is expected to contain at least 1 partition.");
         
         let mut children: Vec<LayoutElemID> = Vec::new();
         for i in 0..no_partitions{
             let spawned_id = tree.spawn_element();
-            let padding = Padding::init(tree, 15, Some(Point::origin()));
+            let padding = Padding::init(tree, 15, None);
 
             children.push(spawned_id);
             tree.insert_element_at(LayoutElement::Padding(padding), spawned_id);
@@ -36,6 +37,7 @@ impl Workspace{
         
         Workspace{
             active_desktop: 1,
+            desktops_on_each_row: desktops_on_each_row,
             desktops: children
         }
     }
@@ -72,19 +74,19 @@ impl Workspace{
         &self.desktops
     }
 
-    pub fn get_offset_geometry(&self, tree: &LayoutTree, outer_geometry: Geometry, child: u16) -> Geometry{
+    pub fn get_offset_geometry(&self, tree: &LayoutTree, outer_geometry: Geometry, this_desktop: u16) -> Geometry{
+        let miss = this_desktop as i32 - self.active_desktop as i32;
+
         let offset = 
-            if child == self.active_desktop as u16{
-                Geometry::zero()
-            }
-            else{
-                tree.get_outer_geometry()
+            match miss {
+                0 => Geometry::zero(),
+                _ => tree.get_outer_geometry()
             };
 
         Geometry{
             origin: Point{
-                x: outer_geometry.origin.x + offset.size.w as i32,
-                y: outer_geometry.origin.y + offset.size.h as i32
+                x: outer_geometry.origin.x + (miss % self.desktops_on_each_row) * if miss != 0 { miss / miss.abs() } else { 1 } * offset.size.w as i32,
+                y: outer_geometry.origin.y + (miss / self.desktops_on_each_row) * offset.size.h as i32
             },
             size: outer_geometry.size
         }

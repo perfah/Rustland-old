@@ -162,7 +162,7 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
             // Window manager catch modifier
 
             if sym == keysyms::KEY_Left || sym == keysyms::KEY_Right {
-                if let Some(mut element) = wm_state.tree.lookup_element(PARENT_ELEMENT) {
+                if let Some(mut element) = wm_state.tree.lookup_element(1) {
                     match *element{
                         LayoutElement::Workspace(ref mut wrkspc) => {
                             match sym{
@@ -171,7 +171,7 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
                                 _ => {}
                             }
                         }
-                        _ => {}
+                        _ => { panic!("Expected element to be a workspace.") }
                     }
                 }
 

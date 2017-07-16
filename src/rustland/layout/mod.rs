@@ -22,7 +22,7 @@ use definitions::{LayoutElemID, MAX_WORKSPACES_LIMIT};
 use layout::element::LayoutElement;
 use layout::element::bisect::*;
 use layout::element::workspace::*;
-use layout::element::bisect::*;
+use layout::element::padding::*;
 use layout::element::window::*;
 use layout::policy::LayoutPolicy;
 use layout::policy::circulation::Circulation;
@@ -75,14 +75,19 @@ impl LayoutTree {
             properties: HashMap::new()
         };
 
-        //Place root 
-        let parent_id = tree.spawn_element();
         tree.tags.tag_element_on_condition("root", |elem_id, wm_state| elem_id == PARENT_ELEMENT);
         tree.tags.tag_element_on_condition("focused", |elem_id, wm_state| elem_id == wm_state.tree.focused_id);
 
-        let workspace = Workspace::init(&mut tree, MAX_WORKSPACES_LIMIT);
-        tree.insert_element_at(LayoutElement::Workspace(workspace), parent_id);
-        
+        //Place root 
+        let parent_id = tree.spawn_element();
+        let padding = Padding::init(&mut tree, 0, Some(Point::origin()));
+
+        let workspaces = Workspace::init(&mut tree, 3, 3);
+        tree.insert_element_at(LayoutElement::Workspace(workspaces), padding.child_elem_id);
+
+        // Insert root element
+        tree.insert_element_at(LayoutElement::Padding(padding), parent_id);
+
         tree
     }
 
