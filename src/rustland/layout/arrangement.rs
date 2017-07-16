@@ -39,9 +39,10 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
         let mut output = String::new();
 
         if let Some(property_bank) = tree.get_element_properties(elem_id){
-            for property_name in property_bank.get_all_property_names(){
-                (*elem).set_property(tree, outer_element_id, property_name.clone(), 0f32);
+            let mut property_names = property_bank.get_all_property_names();
+            property_names.sort();
 
+            for property_name in property_names{
                 if let Some(property_value) = (*elem).get_property(tree, outer_element_id, property_name.clone()){
                     output.push_str(PROPERTY_PREFIX);
                     output.push_str(property_name.as_str());

@@ -28,7 +28,7 @@ impl Workspace{
         let mut children: Vec<LayoutElemID> = Vec::new();
         for i in 0..no_partitions{
             let spawned_id = tree.spawn_element();
-            let padding = Padding::init(tree, 15);
+            let padding = Padding::init(tree, 15, Some(Point::origin()));
 
             children.push(spawned_id);
             tree.insert_element_at(LayoutElement::Padding(padding), spawned_id);

@@ -44,12 +44,14 @@ impl PropertyProvider for LayoutElement{
 
     fn get_property(&mut self, tree: &LayoutTree, elem_id: LayoutElemID, name: String) -> Option<f32>{
         if let Some(property_bank) = tree.properties.get(&elem_id){
-            if let Some(handle) = property_bank.get_handle(name){
-                handle(self, None).to_f32()
+            if let Some(property_handle) = property_bank.get_handle(name){
+                if let Some(property_value) = property_handle(self, None){
+                    return property_value.to_f32();
+                }
             }
-            else { None }
         }
-        else{ None } 
+
+        None
     }
 
     fn set_property(&mut self, tree: &LayoutTree, elem_id: LayoutElemID, name: String, new_value: f32){

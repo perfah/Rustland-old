@@ -9,17 +9,28 @@ use common::definitions::{DefaultNumericType, LayoutElemID};
 use layout::LayoutTree;
 use layout::element::LayoutElement;
 
-type handle_function = Fn(&mut LayoutElement, Option<DefaultNumericType>) -> &ToPrimitive;
+type handle_function = Fn(&mut LayoutElement, Option<DefaultNumericType>) -> Option<&ToPrimitive>;
+
+macro_rules! assist_property_handle{
+    ($elem_type:ident, $element:expr, $element_nick:ident, $handling:block) => ({        
+        match *$element{
+            LayoutElement::$elem_type(ref mut $element_nick) => {
+                $handling
+            },
+            _ => panic!("This shouldn't compile.")
+        }
+    })
+}
 
 macro_rules! make_property_handle{
-    ($elem_type:ident, $var_name:ident, $var_type: ty) => (|element: &mut LayoutElement, new_value: Option<DefaultNumericType>| {        
+    ($elem_type:ident, $var_type: ty, $var_name:ident) => (|element: &mut LayoutElement, new_value: Option<DefaultNumericType>| {        
         match *element{
             LayoutElement::$elem_type(ref mut matched_element) => {
                 if let Some(value) = new_value{
                     matched_element.$var_name = cast(value).expect("Casting error - is the last argument type numeric?");
                 }
 
-                &mut matched_element.$var_name
+                Some(&matched_element.$var_name)
             },
             _ => panic!("This shouldn't compile.")
         }
@@ -47,7 +58,7 @@ impl PropertyBank{
         }
     }
 
-    pub fn address_property<T>(&mut self, name: String, handle: T) where T: Fn(&mut LayoutElement, Option<DefaultNumericType>) -> &ToPrimitive + 'static{
+    pub fn address_property<T>(&mut self, name: String, handle: T) where T: Fn(&mut LayoutElement, Option<DefaultNumericType>) -> Option<&ToPrimitive> + 'static{
         self.properties.insert(name, Box::new(handle));
     }
 
