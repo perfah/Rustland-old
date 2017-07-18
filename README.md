@@ -20,18 +20,17 @@ Current state
  - Workspaces
  - Tag system for referencing items in the layout, e.g. both '@focused' and '@firefox' would reference Firefox given that it is the active application
  - Network transparency (TCP) allows for potential interaction with the WM from various applications/platsforms. Rustland natively supports a set of commands which currently are the following (in [rlctl](#rlctl---utility) syntax):
-   - focus: Switch the focus to a specific element/location
-   - tree: Sends back a list of elements in the window layout in a tree like format.
-   - runapp: Executes an application to start in the focused position of the layout.
-   - moveto: Moves an element in the layout to another place. 
 
-rlctl - utility
----------------
 
-   rlctl is a proof of concept command line utility for controlling the rustland compositor from the outside. 
-   This is developed alongside the compositor and makes use of the TCP functionality.  
-   Example syntax: ``rlctl tree``, ``rlctl runapp /usr/bin/thunar``, ``rlctl @thunar moveto @root``
+rlctl, a compositor interaction utility
+---------------------------------------
 
+rlctl is a proof of concept command line utility for interacting with the Rustland compositor from the outside. 
+This is developed alongside the compositor and makes use of the built-in TCP functionality.
+Example syntax: ``rlctl tree``, ``rlctl runapp /usr/bin/thunar``, ``rlctl @thunar moveto @root``
+   
+[*more information*](https://github.com/perfah/Rustland/wiki/rlctl,-a-compositor-interaction-utility)
+   
 Potential features in the future
 --------------------------------
 
