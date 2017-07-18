@@ -1,13 +1,16 @@
 Rustland
 ========
 
-What is Rustland?
------------------
+What is it?
+-----------
 
-  A **work-in-progress** window manager, or more specifically a
-  compositor for the Wayland protocol, with features such as automatic window tiling and interactivity over tcp. Rustland is written in Rust (lo and behold) and is aiming for flexibility and powerful customization.
+  Inspired feature-wise by previous tiling window managers such as [i3](https://i3wm.org/) and [bspwm](https://github.com/baskerville/bspwm), Rustland is yet another window manager. 
   
-  Rustland is currently in the alpha stage and will probably not fit your needs just yet.
+  Unlike them however, Rustland is not an **x11** window manager, and instead more specifically a **[Wayland](https://wayland.freedesktop.org/) compositor** filling a similar but yet very distant role. 
+  
+  The intention is to contribute to the Wayland ecosystem by showing up as another counterpart to the typical [x11 dynamic window manager](https://en.wikipedia.org/wiki/Dynamic_window_manager). This is however a different interpretation and the aim today is somewhat diverge with pointers to: automatic window tiling, multiple workspaces, network transparency and visual sugar (window gaps, transitions, etc). 
+  
+  Rustland is (lo and behold) written in Rust, but **still in the alpha stage and will probably not fit your needs just yet**. 
 
   <img align="right" width="549" height="361" src="https://i.gyazo.com/9d8d6f9d7956d11e958c4dbd7154b497.png">
 
@@ -16,11 +19,12 @@ Current state
 
  - On-demand like creation of window layouts 
  - Automatic circular window tiling
- - Layout gap of 15 pixels
- - Workspaces
- - Tag system for referencing items in the layout, e.g. both '@focused' and '@firefox' would reference Firefox given that it is the active application
- - Network transparency (TCP) allows for potential interaction with the WM from various applications/platsforms. Rustland natively supports a set of commands which currently are the following (in [rlctl](#rlctl---utility) syntax):
+ - Tag system for referencing items in the layout, e.g. both '@focused' and '@firefox' references Firefox should it be the focused application in your layout
+ - Network transparency (via TCP) allows for potential interaction with the compositor from various applications/platsforms. 
 
+Custom configuration as a development stage has been delay which means that some things are still hardcoded:
+ - Layout gap of 15 pixels
+ - 2x2 grid of workspaces
 
 rlctl, a compositor interaction utility
 ---------------------------------------
