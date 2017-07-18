@@ -32,4 +32,5 @@ pub const SOCKET_DETERMINANT: u8 = b'$';
 pub const TAG_PREFIX: &str = "@";
 pub const PROPERTY_PREFIX: &str = "~";
 
+pub const FPS: u64 = 250;
 pub const FALLBACK_RESOLUTION: Size = Size { w: 640, h: 480 };

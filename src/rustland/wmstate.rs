@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use rustwlc::*;
 use io::physical::InputDevice;
 
+use layout::transition::Transition;
 use layout::*;
 use layout::element::workspace::Workspace;
 use layout::arrangement::*;
@@ -41,4 +42,7 @@ lazy_static! {
 
     pub static ref PENDING_JOBS: Mutex<Vec<Job> >= Mutex::new(Vec::new());
     pub static ref FINALIZED_JOBS: Mutex<Vec<Job>> = Mutex::new(Vec::new());
+    pub static ref ACTIVE_TRANSITIONS: Mutex<Vec<Transition>> = Mutex::new(Vec::new());
 }
+
+unsafe impl Send for ACTIVE_TRANSITIONS {}

@@ -10,12 +10,13 @@ use rustwlc::types::{ButtonState, KeyboardModifiers, KeyState, KeyboardLed, Scro
                      MOD_NONE, MOD_CTRL, RESIZE_LEFT, RESIZE_RIGHT, RESIZE_TOP, RESIZE_BOTTOM};
 
 use wmstate::*;
-use definitions::{WM_FORWARD_EVENT_TO_CLIENT, WM_CATCH_EVENT, LEFT_CLICK, RIGHT_CLICK};
+use common::definitions::{WM_FORWARD_EVENT_TO_CLIENT, WM_CATCH_EVENT, LEFT_CLICK, RIGHT_CLICK};
 
 use layout::arrangement::*;
 use layout::*;
 use layout::element::LayoutElement;
 use layout::element::bisect::Orientation;
+use layout::element::workspace::Direction;
 use common::job::{Job, JobType};
 
 pub struct InputDevice {
@@ -158,28 +159,40 @@ extern fn on_keyboard_key(view: WlcView, _time: u32, mods: &KeyboardModifiers, k
             return WM_CATCH_EVENT;
         }
 
-        if mods.mods == MOD_ALT {
+        if mods.mods == MOD_SHIFT {
             // Window manager catch modifier
 
-            if sym == keysyms::KEY_Left || sym == keysyms::KEY_Right {
+            let display_geometry = wm_state.tree.get_outer_geometry();
+            let mut new_workspace_offset = None;
+            if sym == keysyms::KEY_Left || sym == keysyms::KEY_Right || sym == keysyms::KEY_Up || sym == keysyms::KEY_Down {
                 if let Some(mut element) = wm_state.tree.lookup_element(1) {
                     match *element{
                         LayoutElement::Workspace(ref mut wrkspc) => {
-                            match sym{
-                                keysyms::KEY_Left => { wrkspc.prev_desktop(); },
-                                keysyms::KEY_Right => { wrkspc.next_desktop(); }
-                                _ => {}
-                            }
+                            wrkspc.switch_to_subspace_in_direction(
+                                match sym{
+                                    keysyms::KEY_Left => Direction::LEFT,
+                                    keysyms::KEY_Right => Direction::RIGHT,
+                                    keysyms::KEY_Up => Direction::UP,
+                                    keysyms::KEY_Down => Direction::DOWN,
+                                    _ => panic!("The number of key check are more than the possible direction.")
+                                }
+                            );
+                            
+                            new_workspace_offset = Some(wrkspc.get_offset_geometry(display_geometry, Geometry::zero(), wrkspc.get_active_subspace() as u16));
                         }
                         _ => { panic!("Expected element to be a workspace.") }
                     }
+                }
+                
+                if let Some(geometry) = new_workspace_offset{
+                    wm_state.tree.transition_element(PARENT_ELEMENT, "offset_x".to_string(), -geometry.origin.x as f32, false, 250);
+                    wm_state.tree.transition_element(PARENT_ELEMENT, "offset_y".to_string(), -geometry.origin.y as f32, false, 250);
                 }
 
                 if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
                     pending_jobs.push(Job::init_unconditional(JobType::LAYOUT_REFRESH));
                 } 
 
-                println!("{}", wm_state.tree);
                 return WM_CATCH_EVENT;
             }
 

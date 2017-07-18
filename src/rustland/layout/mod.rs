@@ -4,6 +4,7 @@ pub mod arrangement;
 pub mod element;
 pub mod tag;
 pub mod policy;
+pub mod transition;
 
 use std::cmp;
 use std::fmt;
@@ -18,7 +19,7 @@ use std::ops::Deref;
 use rustwlc::handle::*;
 use rustwlc::types::*;
 use wmstate::*;
-use definitions::{LayoutElemID, MAX_WORKSPACES_LIMIT};
+use common::definitions::{DefaultNumericType, LayoutElemID, MAX_WORKSPACES_LIMIT};
 use layout::element::LayoutElement;
 use layout::element::bisect::*;
 use layout::element::workspace::*;
@@ -27,6 +28,7 @@ use layout::element::window::*;
 use layout::policy::LayoutPolicy;
 use layout::policy::circulation::Circulation;
 use layout::property::{ElementPropertyProvider, PropertyBank};
+use layout::transition::Transition;
 
 use utils::interpolation::NumericInterpolation;
 use utils::interpolation::methods::LinearInterpolator;
@@ -82,7 +84,7 @@ impl LayoutTree {
         let parent_id = tree.spawn_element();
         let padding = Padding::init(&mut tree, 0, Some(Point::origin()));
 
-        let workspaces = Workspace::init(&mut tree, 3, 3);
+        let workspaces = Workspace::init(&mut tree, 2, 2);
         tree.insert_element_at(LayoutElement::Workspace(workspaces), padding.child_elem_id);
 
         // Insert root element
@@ -93,7 +95,7 @@ impl LayoutTree {
 
     pub fn refresh(wm_state: &mut WMState){
         TagRegister::refresh_tag_statuses(wm_state);
-        
+
         let mut stacked_padding: Option<u32> = None; 
         arrangement::arrange(&wm_state.tree, PARENT_ELEMENT, wm_state.tree.outer_geometry, &mut stacked_padding);
     }
@@ -226,22 +228,19 @@ impl LayoutTree {
         self.properties.get(&elem_id)
     }
 
-/*
-    fn animate<T: AnimatedObject>(&self, element_id: LayoutElemID, destination: u32) -> Animation{
-        let origin_value = 
-            if let Some(element) = self.lookup_element(element_id){
-                *((element.borrow_mut() as &mut AnimatedObject).find_value())
+    pub fn transition_element(&mut self, element_id: LayoutElemID, transitioning_property: String, new_value: DefaultNumericType, relative_transition: bool, time_frame_ms: u64){
+        if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.lock(){    
+            if let Some(ref mut elem) = self.lookup_element(element_id){
+                if let Some(value_origin) = (*elem).get_property(self, element_id, transitioning_property.clone()){
+                    active_transitions.push(Transition::new(element_id, transitioning_property, value_origin, new_value, relative_transition, time_frame_ms));
+                }
+                else{
+                    // Something unexpected happened so we go directly to new value without a transition
+                    (*elem).set_property(self, element_id, transitioning_property.clone(), if relative_transition { new_value } else { panic!("Can't find element!")});
+                }
             }
-            else{
-                destination
-            };
-
-        Animation{
-            element_id: element_id,
-            interpolation: NumericInterpolation::new(box LinearInterpolator{}, origin_value, 1f32, 100)
         }
     }
-    */
 }
 
 impl fmt::Display for LayoutTree{

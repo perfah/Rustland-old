@@ -10,7 +10,7 @@ use super::*;
 use wmstate::*;
 use super::element::*;
 use super::element::window::*;
-use definitions::{TAG_PREFIX, PROPERTY_PREFIX, LayoutElemID};
+use common::definitions::{TAG_PREFIX, PROPERTY_PREFIX, LayoutElemID};
 
 
 /// Arrangement  
@@ -130,9 +130,9 @@ pub fn find_first_empty_element(tree: &LayoutTree, outer_element_id: LayoutElemI
             LayoutElement::None => {
                 return Some(outer_element_id);
             },
-            LayoutElement::Workspace(ref wrkspc) => {
+            LayoutElement::Padding(ref padding) => {
                 // Recursion to another layer of depth in the tree structure
-                if let Some(candidate_id) = find_first_empty_element(tree, wrkspc.get_active_child_id()){
+                if let Some(candidate_id) = find_first_empty_element(tree, padding.child_elem_id){
                     return Some(candidate_id);
                 }
             },
@@ -145,9 +145,9 @@ pub fn find_first_empty_element(tree: &LayoutTree, outer_element_id: LayoutElemI
                     }   
                 }
             },
-            LayoutElement::Padding(ref padding) => {
+            LayoutElement::Workspace(ref wrkspc) => {
                 // Recursion to another layer of depth in the tree structure
-                if let Some(candidate_id) = find_first_empty_element(tree, padding.child_elem_id){
+                if let Some(candidate_id) = find_first_empty_element(tree, wrkspc.get_active_child_id()){
                     return Some(candidate_id);
                 }
             },
@@ -171,7 +171,7 @@ pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry
                 for (i, child_id) in wrkspc.get_all_children().iter().enumerate()
                 {   
                     // Recursion
-                    arrange(tree, *child_id, wrkspc.get_offset_geometry(tree, outer_geometry, i as u16), stacked_padding);
+                    arrange(tree, *child_id, wrkspc.get_offset_geometry(tree.get_outer_geometry(), outer_geometry, i as u16), stacked_padding);
                 }
             },
             &mut LayoutElement::Padding(ref mut padding) => {

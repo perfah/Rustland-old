@@ -21,8 +21,8 @@ pub extern crate num;
 pub extern crate num_traits;
 
 extern crate common;
-use common::definitions;
-use wmstate::{PENDING_JOBS, FINALIZED_JOBS};
+use common::definitions::FPS;
+use wmstate::{PENDING_JOBS, FINALIZED_JOBS, ACTIVE_TRANSITIONS};
 use common::job::JobType;
 
 mod layout;
@@ -77,4 +77,31 @@ pub extern fn compositor_ready()
             process_all_current_jobs();
         }
     });    
+
+    spawn(|| {
+        let delta = 1000 / FPS;
+
+        loop{
+            if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.lock(){    
+                if !active_transitions.is_empty(){     
+                    if let Ok(mut wm_state) = WM_STATE.write(){  
+
+                        // Continues to step forward each transition
+                        for transition in active_transitions.iter_mut(){
+                            transition.next(&mut wm_state.tree, delta);
+                        }
+
+                        // Completed transition should be in the list
+                        active_transitions.retain(|ref transition| transition.is_ongoing());
+
+                        // A layout refresh is necessary for the changes to apply
+                        LayoutTree::refresh(&mut wm_state);
+                    }
+                }
+            }
+            
+            sleep(time::Duration::from_millis(delta));
+        }
+    });
 }
+

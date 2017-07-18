@@ -1,7 +1,7 @@
 use io::process_all_current_jobs;
 use common::job::JobType;
 use wmstate::{WM_STATE, PENDING_JOBS, FINALIZED_JOBS};
-use definitions::{SOCKET_PORT, SOCKET_DETERMINANT};
+use common::definitions::{SOCKET_PORT, SOCKET_DETERMINANT};
 use serde_json;
 
 use std::io::{Write, BufReader, BufWriter, BufRead};

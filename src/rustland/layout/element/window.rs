@@ -15,7 +15,7 @@ use rustwlc::handle::*;
 use rustwlc::callback;
 
 use wmstate::*;
-use definitions::{ElementReference, WM_CATCH_EVENT};
+use common::definitions::{ElementReference, WM_CATCH_EVENT};
 use common::job::{Job, JobType};
 use layout::*;
 use layout::arrangement::*;
@@ -65,11 +65,6 @@ impl Window{
     }
 
     pub fn set_desired_geometry(&mut self, geometry: Geometry){
-        println!("Debug: {} positioned at: {}", 
-            if let Some(view) = self.view { view.get_class() } else { String::from("Untitled") }, 
-            self.desired_geometry
-        );
-
         self.desired_geometry = geometry;
 
         match self.view
