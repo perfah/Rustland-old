@@ -4,11 +4,11 @@ Rustland
 What is it?
 -----------
 
-  Inspired feature-wise by previous tiling window managers such as [i3](https://i3wm.org/) and [bspwm](https://github.com/baskerville/bspwm), Rustland is yet another ond of them. 
+  Inspired feature-wise by dynamic window managers like [i3](https://i3wm.org/) and [bspwm](https://github.com/baskerville/bspwm), Rustland is a project of the same category. 
   
-  Unlike them however, Rustland is not an **x11** window manager, and instead more specifically a **[Wayland](https://wayland.freedesktop.org/) compositor** filling a similar but yet very distant role. 
+  Unlike them however, Rustland is not an **x11** window manager, but instead more specifically a **[Wayland](https://wayland.freedesktop.org/) compositor** with a similar although not at all interchangeable role. 
   
-  The intention is to contribute to the Wayland ecosystem by showing up as another counterpart to the typical [x11 dynamic window manager](https://en.wikipedia.org/wiki/Dynamic_window_manager). This is however a different interpretation and the aim today is somewhat diverge with pointers to: automatic window tiling, multiple workspaces, network transparency and visual sugar (window gaps, transitions, etc). 
+  The intention is to contribute to the Wayland ecosystem by creating a counterpart to the typical x11 [dynamic window manager](https://en.wikipedia.org/wiki/Dynamic_window_manager). My aim is not to clone any preexisting ones but to implement one from my own interpretation of one and with features I have deemed to have potential. These include: automatic window tiling, multiple workspaces, network transparency, visual sugar (window gaps, transitions, etc) and more. 
   
   Rustland is (lo and behold) written in Rust, but **still in the alpha stages meaning that it probably won't fit your needs just yet**. 
 
@@ -36,6 +36,7 @@ Example syntax: ``rlctl tree``, ``rlctl runapp /usr/bin/thunar``, ``rlctl @thuna
    
 [*more information*](https://github.com/perfah/Rustland/wiki/rlctl,-a-compositor-interaction-utility)
    
+   
 Features in the near future
 ---------------------------
 
