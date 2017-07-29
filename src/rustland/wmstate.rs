@@ -1,24 +1,17 @@
 extern crate serde;
 extern crate serde_json;
-use self::serde_json::Map;
 
-use std::sync::{Arc, RwLock, Mutex};
+use std::sync::{RwLock, Mutex};
 use std::marker::Sync;
-use std::cell::{RefCell, RefMut};
-use std::net::TcpListener;
-use std::collections::HashMap;
-
-use rustwlc::*;
-use io::physical::InputDevice;
-
-use layout::transition::Transition;
-use layout::*;
-use layout::element::workspace::Workspace;
-use layout::arrangement::*;
-use layout::tag::TagRegister;
 
 use common::definitions::FALLBACK_RESOLUTION;
 use common::job::Job;
+use io::physical::InputDevice;
+use layout::transition::Transition;
+use layout::*;
+use utils::geometry::{PointExt, GeometryExt};
+
+use wlc::*;
 
 pub struct WMState{
     pub tree: LayoutTree,

@@ -1,17 +1,9 @@
-use std::cell::*;
-use std::sync::MutexGuard;
+pub use wlc::{Geometry, Point, Size};
 
-pub use rustwlc::types::{Geometry, Point, Size};
-
-use wmstate::*;
 use layout::*;
 use common::definitions::LayoutElemID;
-use layout::arrangement::*;
-
-use super::*;
 
 pub const LOWER_SEGM_BOUND: i32 = 0;
-pub const HIGHER_SEGM_BOUND: i32 = 1;
 
 #[derive(Clone)]
 pub enum Orientation{

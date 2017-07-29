@@ -1,5 +1,5 @@
-extern crate rustwlc;
-use self::rustwlc::*;
+extern crate wlc;
+use self::wlc::*;
 
 pub type DefaultNumericType = f32;
 

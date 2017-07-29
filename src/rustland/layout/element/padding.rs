@@ -1,12 +1,10 @@
-use num::traits::{NumCast,ToPrimitive};
-use std::collections::HashMap;
-
 use common::definitions::{DefaultNumericType, LayoutElemID};
 use layout::LayoutTree;
 use layout::element::LayoutElement;
 use layout::property::{ElementPropertyProvider, PropertyBank};
+use utils::geometry::PointExt;
 
-use rustwlc::*;
+use wlc::*;
 use num::traits::cast;
 
 pub struct Padding{

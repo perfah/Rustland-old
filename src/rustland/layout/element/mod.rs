@@ -1,11 +1,7 @@
-use std::collections::HashMap;
 use std::fmt;
-use num::traits::ToPrimitive;
-
 use common::definitions::LayoutElemID;
 use layout::LayoutTree;
 use layout::property::{ElementPropertyProvider, PropertyBank};
-use wmstate::WMState;
 
 pub mod workspace;
 pub mod window;

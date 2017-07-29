@@ -1,17 +1,16 @@
-use std::borrow::BorrowMut;
-use std::sync::MutexGuard;
-use std::collections::VecDeque;
 use std::ops::DerefMut;
+use std::cell::RefMut;
+use std::fmt;
 
-use rustwlc::types::{Point, Size};
-
-use super::*;
-
-use wmstate::*;
-use super::element::*;
-use super::element::window::*;
 use common::definitions::{TAG_PREFIX, PROPERTY_PREFIX, LayoutElemID};
+use layout::LayoutTree;
+use layout::element::LayoutElement;
+use layout::property::ElementPropertyProvider;
+use layout::arrangement;
+use wmstate::*;
+use utils::geometry::GeometryExt;
 
+use wlc::{Size, Geometry, Visibility};
 
 /// Arrangement  
 /// Recursive methods for describing and interacting with the layout
@@ -111,8 +110,8 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
                 indent(*indentation_whtspcs, f);
                 write!(f, "├──[{}] Window: {} {}", outer_element_id, tags, props);
                 
-                if tree.get_outer_geometry().contains_geometry(window.get_desired_geometry()){
-                    write!(f, "[{}]", window.get_desired_geometry());
+                if tree.get_outer_geometry().overlaps_geometry(window.get_desired_geometry()){
+                    write!(f, "[{:?}]", window.get_desired_geometry());
                 }
                 writeln!(f);
             },
@@ -183,6 +182,13 @@ pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry
                 *stacked_padding = None;
             },
             &mut LayoutElement::Window(ref mut window) => {
+                if let Some(view) = window.get_view(){
+                    view.set_visibility(
+                        if tree.outer_geometry.overlaps_geometry(outer_geometry) { Visibility::Slot1 } 
+                        else { Visibility::Null }
+                    );
+                }
+            
                 window.set_desired_geometry(outer_geometry.clone());
             },
             _ => {}

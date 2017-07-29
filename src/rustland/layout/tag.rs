@@ -15,7 +15,7 @@ pub struct TagRegister{
     // bindings between tags and n LayoutElements  
     bindings: HashMap<String, Vec<LayoutElemID>>,
 
-    // bindings between element ids and WlcView PID:s
+    // bindings between element ids and View PID:s
     pub view_bindings: HashMap<ViewPID, LayoutElemID>,
 
     // closure functions (values) determining whether LayoutElements can be addressed by specific tags (keys) 

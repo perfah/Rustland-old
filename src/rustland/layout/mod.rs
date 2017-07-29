@@ -16,8 +16,6 @@ use std::rc::Rc;
 use std::borrow::BorrowMut;
 use std::ops::Deref;
 
-use rustwlc::handle::*;
-use rustwlc::types::*;
 use wmstate::*;
 use common::definitions::{DefaultNumericType, LayoutElemID, MAX_WORKSPACES_LIMIT};
 use layout::element::LayoutElement;
@@ -29,11 +27,12 @@ use layout::policy::LayoutPolicy;
 use layout::policy::circulation::Circulation;
 use layout::property::{ElementPropertyProvider, PropertyBank};
 use layout::transition::Transition;
-
 use utils::interpolation::NumericInterpolation;
 use utils::interpolation::methods::LinearInterpolator;
-
+use utils::geometry::{PointExt, SizeExt, GeometryExt};
 use layout::tag::*;
+
+use wlc::{View, Output};
 
 pub const PARENT_ELEMENT: LayoutElemID = 0;
 
@@ -138,14 +137,14 @@ impl LayoutTree {
     pub fn swap_cell(&mut self, elem_id: LayoutElemID, new_cell: RefCell<LayoutElement>) -> Option<RefCell<LayoutElement>>{
         match *(new_cell.borrow()){
             LayoutElement::Window(ref window) => { 
-                if let Some(view) = window.get_view(){
-                    self.tags.view_bindings.insert(view.get_pid(), elem_id); 
+                if let Some(ref view) = window.get_view(){
+                    self.tags.view_bindings.insert(view.pid(), elem_id); 
                 }
             }
             _ => {}
         }
 
-        (*new_cell.borrow()).register_properties(self.properties.get_mut(&elem_id).expect("An element with this has not spawned?!"));
+        (*new_cell.borrow()).register_properties(self.properties.get_mut(&elem_id).expect("An element with this id has not spawned?!"));
 
         let old_cell = self.elements.insert(
             elem_id, 
@@ -155,8 +154,8 @@ impl LayoutTree {
         if let Some(ref old_element) = old_cell{
             match *(old_element.borrow()){
                 LayoutElement::Window(ref window) => { 
-                    if let Some(view) = window.get_view(){    
-                        self.tags.view_bindings.remove(&view.get_pid()); 
+                    if let Some(ref view) = window.get_view(){    
+                        self.tags.view_bindings.remove(&view.pid()); 
                     }
                 }
                 _ => {}
@@ -173,6 +172,11 @@ impl LayoutTree {
         self.active_id += 1;
         return self.active_id - 1;
     } 
+
+    fn detach_element(&mut self, element_id: LayoutElemID) {
+        self.insert_element_at(LayoutElement::None, element_id);
+    }
+
 
     pub fn root(&self) -> RefMut<LayoutElement>{
         match self.lookup_element(PARENT_ELEMENT)
@@ -252,10 +256,13 @@ impl fmt::Display for LayoutTree{
     }
 }
 
-pub extern fn on_output_resolution(output: WlcOutput, _from: &Size, _to: &Size) {
-    let mut wm_state = WM_STATE.write().unwrap();
-
-    wm_state.tree.set_outer_geometry(Geometry::new(Point::origin(), *_to));
-
-    println!("Updated resolution: {}", _to);
+/*
+fn get_topmost_view(output: &Output, offset: usize) -> Option<&View> {
+    let views = output.views();
+    if views.is_empty() { None }
+    else {
+        Some(views[(views.len() - 1 + offset) % views.len()])
+    }
 }
+
+*/

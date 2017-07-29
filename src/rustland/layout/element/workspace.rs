@@ -1,20 +1,11 @@
-use std::cell::*;
-use std::borrow::Borrow;
-use std::collections::HashMap;
-use std::cmp;
 use std::u16;
 
-
-use rustwlc::*;
-
-use wmstate::*;
 use common::definitions::LayoutElemID;
-use layout::*;
-use layout::element::bisect::*;
+use layout::LayoutTree;
 use layout::element::padding::Padding;
 use super::LayoutElement;
 
-use layout::arrangement::*;
+use wlc::*;
 
 pub enum Direction { LEFT, RIGHT, UP, DOWN }
 
@@ -29,7 +20,7 @@ impl Workspace{
         assert!(columns * rows > 0, "At least one workspace is requiered.");
         
         let mut children: Vec<LayoutElemID> = Vec::new();
-        for i in 0..(columns * rows){
+        for _ in 0..(columns * rows){
             let spawned_id = tree.spawn_element();
             let padding = Padding::init(tree, 15, None);
 
