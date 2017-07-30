@@ -74,7 +74,7 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
                 }
                 *indentation_whtspcs -= 1;
             },
-            LayoutElement::Workspace(ref element) => {
+            LayoutElement::Workspaces(ref element) => {
                 for (i, child_id) in element.get_all_children().iter().enumerate(){
                     indent(*indentation_whtspcs, f);
 
@@ -144,7 +144,7 @@ pub fn find_first_empty_element(tree: &LayoutTree, outer_element_id: LayoutElemI
                     }   
                 }
             },
-            LayoutElement::Workspace(ref wrkspc) => {
+            LayoutElement::Workspaces(ref wrkspc) => {
                 // Recursion to another layer of depth in the tree structure
                 if let Some(candidate_id) = find_first_empty_element(tree, wrkspc.get_active_child_id()){
                     return Some(candidate_id);
@@ -166,7 +166,7 @@ pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry
                     arrange(tree, *child_id, bisect.get_offset_geometry(outer_geometry, stacked_padding, i as i32), stacked_padding);
                 }
             },
-            &mut LayoutElement::Workspace(ref wrkspc) => {               
+            &mut LayoutElement::Workspaces(ref wrkspc) => {               
                 for (i, child_id) in wrkspc.get_all_children().iter().enumerate()
                 {   
                     // Recursion
@@ -205,7 +205,7 @@ pub fn move_element(wm_state: &mut WMState, carry: LayoutElemID, destination: La
 
                 Ok(String::from("Element moved"))
             },
-            &mut LayoutElement::Workspace(ref mut wrkspc) => {
+            &mut LayoutElement::Workspaces(ref mut wrkspc) => {
                 Err(String::from(""))
             },
             _ => Err(String::from("The destination needs to be either a segmentation or a workspace."))

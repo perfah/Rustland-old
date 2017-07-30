@@ -14,7 +14,7 @@ use io::process_all_current_jobs;
 use layout::PARENT_ELEMENT;
 use layout::element::LayoutElement;
 use layout::element::window::Window;
-use layout::element::workspace::Direction;
+use layout::element::workspaces::Direction;
 use layout::LayoutTree;
 use layout::arrangement::*;
 use layout::property::ElementPropertyProvider;
@@ -156,7 +156,7 @@ impl Callback for Compositor {
                 if sym == Key::Left || sym == Key::Right || sym == Key::Up || sym == Key::Down {
                     if let Some(mut element) = wm_state.tree.lookup_element(1) {
                         match *element{
-                            LayoutElement::Workspace(ref mut wrkspc) => {
+                            LayoutElement::Workspaces(ref mut wrkspc) => {
                                 wrkspc.switch_to_subspace_in_direction(
                                     match sym{
                                         Key::Left => Direction::LEFT,

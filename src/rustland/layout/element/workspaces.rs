@@ -9,15 +9,16 @@ use wlc::*;
 
 pub enum Direction { LEFT, RIGHT, UP, DOWN }
 
-pub struct Workspace{
+pub struct Workspaces{
     active_subspace: usize,
     columns: usize,
     subspace_element_ids: Vec<LayoutElemID> 
 }
 
-impl Workspace{
-    pub fn init(tree: &mut LayoutTree, columns: usize, rows: usize) -> Workspace{
-        assert!(columns * rows > 0, "At least one workspace is requiered.");
+impl Workspaces{
+    pub fn init(tree: &mut LayoutTree, columns: usize, rows: usize) -> Workspaces {
+        assert!(columns * rows > 0, "At least one sWorkspaces is r
+    quiered.");
         
         let mut children: Vec<LayoutElemID> = Vec::new();
         for _ in 0..(columns * rows){
@@ -28,7 +29,8 @@ impl Workspace{
             tree.insert_element_at(LayoutElement::Padding(padding), spawned_id);
         }
         
-        Workspace{
+        
+    Workspaces{
             active_subspace: 0,
             columns: columns,
             subspace_element_ids: children

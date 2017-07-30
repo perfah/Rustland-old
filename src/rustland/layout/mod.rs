@@ -20,7 +20,7 @@ use wmstate::*;
 use common::definitions::{DefaultNumericType, LayoutElemID, MAX_WORKSPACES_LIMIT};
 use layout::element::LayoutElement;
 use layout::element::bisect::*;
-use layout::element::workspace::*;
+use layout::element::workspaces::*;
 use layout::element::padding::*;
 use layout::element::window::*;
 use layout::policy::LayoutPolicy;
@@ -83,8 +83,8 @@ impl LayoutTree {
         let parent_id = tree.spawn_element();
         let padding = Padding::init(&mut tree, 0, Some(Point::origin()));
 
-        let workspaces = Workspace::init(&mut tree, 2, 2);
-        tree.insert_element_at(LayoutElement::Workspace(workspaces), padding.child_elem_id);
+        let workspaces = Workspaces::init(&mut tree, 2, 2);
+        tree.insert_element_at(LayoutElement::Workspaces(workspaces), padding.child_elem_id);
 
         // Insert root element
         tree.insert_element_at(LayoutElement::Padding(padding), parent_id);

@@ -3,12 +3,12 @@ use common::definitions::LayoutElemID;
 use layout::LayoutTree;
 use layout::property::{ElementPropertyProvider, PropertyBank};
 
-pub mod workspace;
-pub mod window;
 pub mod bisect;
 pub mod padding;
+pub mod window;
+pub mod workspaces;
 
-use layout::element::LayoutElement::{Bisect, Workspace, Padding, Window};
+use layout::element::LayoutElement::{Bisect, Padding, Window, Workspaces};
 
 pub enum LayoutElement{
     // Unallocated space in the layout
@@ -18,7 +18,7 @@ pub enum LayoutElement{
     Bisect(bisect::Bisect),
 
     // A container of multiple child elements with only one active in a given moment
-    Workspace(workspace::Workspace),
+    Workspaces(workspaces::Workspaces),
     
     // A container that can be smaller in relation to the outside geometry 
     Padding(padding::Padding),
@@ -31,7 +31,7 @@ impl ElementPropertyProvider for LayoutElement{
     fn register_properties(&self, property_bank: &mut PropertyBank){
         match self{
             &Bisect(ref bisect) => {},
-            &Workspace(ref workspace) => {},
+            &Workspaces(ref workspaces) => {},
             &Padding(ref padding) => padding.register_properties(property_bank),
             &Window(ref window) => {},
             _ => {}
