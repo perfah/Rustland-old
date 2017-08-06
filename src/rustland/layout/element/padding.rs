@@ -1,4 +1,5 @@
 use std::cell::RefMut;
+use std::cmp::max;
 
 use common::definitions::{DefaultNumericType, LayoutElemID};
 use layout::LayoutTree;
@@ -35,8 +36,8 @@ impl Padding{
                 y: offset.y + outer_geometry.origin.y + self.gap_size as i32
             },
             size: Size{ 
-                w: outer_geometry.size.w - 2 * self.gap_size,
-                h: outer_geometry.size.h - 2 * self.gap_size
+                w: max(0, outer_geometry.size.w - self.gap_size.checked_mul(2).unwrap_or_default()),
+                h: max(0, outer_geometry.size.h - self.gap_size.checked_mul(2).unwrap_or_default())
             }
         }
     }

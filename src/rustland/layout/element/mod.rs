@@ -35,7 +35,7 @@ impl LayoutElement {
 
     pub fn set_profile(&mut self, new_profile: LayoutElementProfile) {
         match new_profile {
-            LayoutElementProfile::Bisect(_) => {},
+            LayoutElementProfile::Bisect(ref bisect) => bisect.register_properties(&mut self.properties),
             LayoutElementProfile::Grid(_) => {},
             LayoutElementProfile::Padding(ref padding) => padding.register_properties(&mut self.properties),
             LayoutElementProfile::Window(_) => {},
@@ -45,7 +45,7 @@ impl LayoutElement {
         self.profile = RefCell::new(new_profile);
     }
 
-    pub fn get_property(&mut self, elem_id: LayoutElemID, name: String) -> Option<f32>{
+    pub fn get_property(&mut self, name: String) -> Option<f32>{
         let mut profile = self.get_profile_mut();
 
         if let Some(property_handle) = self.properties.get_handle(name){

@@ -3,7 +3,7 @@ use std::u16;
 use common::definitions::LayoutElemID;
 use layout::LayoutTree;
 use layout::element::padding::Padding;
-use layout::element::{LayoutElement, LayoutElementProfile};
+use layout::element::LayoutElementProfile;
 
 use wlc::*;
 

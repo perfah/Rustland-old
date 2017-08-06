@@ -153,7 +153,7 @@ impl Callback for Compositor {
                 let display_geometry = wm_state.tree.get_outer_geometry();
                 let mut new_workspace_offset = None;
                 if sym == Key::Left || sym == Key::Right || sym == Key::Up || sym == Key::Down {
-                    if let Some(mut element) = wm_state.tree.lookup_element(1) {
+                    if let Some(element) = wm_state.tree.lookup_element(1) {
                         match *element.get_profile_mut(){
                             LayoutElementProfile::Grid(ref mut wrkspc) => {
                                 wrkspc.switch_to_subspace_in_direction(
@@ -173,8 +173,12 @@ impl Callback for Compositor {
                     }
                     
                     if let Some(geometry) = new_workspace_offset{
-                        wm_state.tree.transition_element(PARENT_ELEMENT, "offset_x".to_string(), -geometry.origin.x as f32, false, 250);
-                        wm_state.tree.transition_element(PARENT_ELEMENT, "offset_y".to_string(), -geometry.origin.y as f32, false, 250);
+                        wm_state.tree.animate_property(PARENT_ELEMENT, "offset_x".to_string(), -geometry.origin.x as f32, false, 250);
+                        wm_state.tree.animate_property(PARENT_ELEMENT, "offset_y".to_string(), -geometry.origin.y as f32, false, 250);
+
+                        let zoom_magnitude = (wm_state.tree.get_outer_geometry().size.w / 10) as f32;
+                        wm_state.tree.animate_property(PARENT_ELEMENT, "gap_size".to_string(), zoom_magnitude, false, 125);
+                        wm_state.tree.animate_property_after_delay(PARENT_ELEMENT, "gap_size".to_string(), zoom_magnitude, 0f32 as f32, false, 125, 126);
                     }
 
                     if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){

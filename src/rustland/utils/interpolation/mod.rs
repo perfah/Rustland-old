@@ -27,7 +27,7 @@ impl NumericInterpolation{
             end_pole: end_pole,
             intervals: intervals,
             internal_progression: left_bound,
-            ongoing: false
+            ongoing: true
         }
     }
 

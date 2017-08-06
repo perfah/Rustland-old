@@ -1,7 +1,11 @@
-pub use wlc::{Geometry, Point, Size};
+use std::cmp::max;
+use num::{cast, abs};
 
 use layout::*;
 use common::definitions::LayoutElemID;
+use layout::element::ElementPropertyProvider;
+
+pub use wlc::{Geometry, Point, Size};
 
 pub const LOWER_SEGM_BOUND: i32 = 0;
 
@@ -27,18 +31,18 @@ pub struct Bisect{
 }
 
 impl Bisect{
-    pub fn init(ident: LayoutElemID, tree: &mut LayoutTree, orientation: Orientation) -> (LayoutElemID, Bisect) {
-        let partitions = 2f32;
+    pub fn init(ident: LayoutElemID, tree: &mut LayoutTree, orientation: Orientation, ratio: f32) -> (LayoutElemID, Bisect) {
+        assert!(ratio > 0f32, "The ratio must be greater than zero!");
         
         let mut children: Vec<LayoutElemID> = Vec::new();
-        for _ in 0..(partitions as i32){
+        for _ in 0..2{
             children.push(tree.spawn_dummy_element(Some(ident)));
         }
 
         let profile = Bisect{
             children: children,
             orientation: orientation,
-            ratio: 1.0f32 / (partitions as f32)
+            ratio: ratio
         };
 
         (ident, profile)
@@ -83,17 +87,24 @@ impl Bisect{
             {
                 Orientation::Horizontal => {  
                     Size{
-                        w: (self.ratio * outer_geometry.size.w as f32) as u32 - padding / 2,
+                        w: max(0i32, (self.ratio * outer_geometry.size.w as f32) as i32 - padding as i32 / 2) as u32,
                         h: outer_geometry.size.h
                     }
                 }
                 Orientation::Vertical => {
                     Size{
                         w: outer_geometry.size.w,
-                        h: (self.ratio * outer_geometry.size.h as f32) as u32 - padding / 2
+                        h: max(0i32, (self.ratio * outer_geometry.size.h as f32) as i32 - padding as i32 / 2) as u32
                     }
                 }
             }
         }
+    }
+}
+
+
+impl ElementPropertyProvider for Bisect{
+    fn register_properties(&self, property_bank: &mut PropertyBank){    
+        property_bank.address_property("ratio".to_string(), make_property_handle!(Bisect, f32, ratio));
     }
 }

@@ -68,13 +68,15 @@ impl LayoutTree {
         tree.tags.tag_element_on_condition("focused", |elem_id, wm_state| elem_id == wm_state.tree.focused_id);
 
         // Root element
-        let (root_ident, root_profile) = Padding::init(tree.spawn_dummy_element(None), &mut tree, 0, Some(Point::origin()));
+        let (root_ident, root_profile) = Padding::init(tree.spawn_dummy_element(None), &mut tree, 100, Some(Point::origin()));
         
         // Workspaces
         let (grid_ident, grid_profile) = Grid::init(root_profile.child_elem_id, &mut tree, 2, 2);
 
         tree.reserve_element_identity(root_ident, LayoutElementProfile::Padding(root_profile));
         tree.reserve_element_identity(grid_ident, LayoutElementProfile::Grid(grid_profile));
+
+        tree.animate_property(root_ident, "gap_size".to_string(), 0f32, false, 250);
 
         tree
 
@@ -185,31 +187,6 @@ impl LayoutTree {
         elements_ids
     }
 
-    pub fn last_window_id(&self) -> Option<LayoutElemID>{
-        /*
-        let mut i = self.active_id - 1;
-        
-        while {
-            if let Some(a) = self.elements.get(&i)
-            {   
-                match a.borrow().profile {
-                    LayoutElementProfile::Window(ref window) => { return Some(i) }
-                    _ => { true }
-                }
-            }
-            else {
-                false
-            }
-        }{
-            match i{
-                0 => { break; },
-                _ => { i -= 1; }
-            }
-        };
-    */
-        None        
-    }
-
     pub fn get_outer_geometry(&self) -> Geometry{
         self.outer_geometry
     }
@@ -227,16 +204,24 @@ impl LayoutTree {
         }
     }
 
-    pub fn transition_element(&mut self, element_id: LayoutElemID, transitioning_property: String, new_value: DefaultNumericType, relative_transition: bool, time_frame_ms: u64){
+    pub fn animate_property(&self, element_id: LayoutElemID, transitioning_property: String, new_value: DefaultNumericType, relative_transition: bool, time_frame_ms: u64){
         if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.lock(){    
             if let Some(ref mut elem) = self.lookup_element(element_id){
-                if let Some(value_origin) = (*elem).get_property(element_id, transitioning_property.clone()){
-                    active_transitions.push(Transition::new(element_id, transitioning_property, value_origin, new_value, relative_transition, time_frame_ms));
+                if let Some(value_origin) = (*elem).get_property(transitioning_property.clone()){
+                    active_transitions.push(Transition::new(element_id, transitioning_property, value_origin, new_value, relative_transition, time_frame_ms, 0));
                 }
                 else{
                     // Something unexpected happened so we go directly to new value without a transition
-                    elem.set_property(transitioning_property.clone(), if relative_transition { new_value } else { panic!("Can't find element!")});
+                    elem.set_property(transitioning_property.clone(), if relative_transition { new_value } else { panic!("Element either doesn't exist or it doesn't provide that property!")});
                 }
+            }
+        }
+    }
+
+    pub fn animate_property_after_delay(&self, element_id: LayoutElemID, transitioning_property: String, prev_value: DefaultNumericType, new_value: DefaultNumericType, relative_transition: bool, time_frame_ms: u64, delay_ms: u64){
+        if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.lock(){    
+            if let Some(ref mut elem) = self.lookup_element(element_id){
+                active_transitions.push(Transition::new(element_id, transitioning_property, prev_value, new_value, relative_transition, time_frame_ms, delay_ms));
             }
         }
     }

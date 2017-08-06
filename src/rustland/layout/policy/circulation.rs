@@ -38,7 +38,7 @@ impl LayoutPolicy for Circulation{
             find_all_windows(&mut active_windows, true, tree, PARENT_ELEMENT);
 
             if let Some(&last_id) = active_windows.last() {
-                let (_, extension) = Bisect::init(last_id, tree, self.last_orientation.clone());
+                let (_, extension) = Bisect::init(last_id, tree, self.last_orientation.clone(), 0.001f32);
                 let new_preoccupied_id = extension.get_children()[0];
                 let new_unoccupied_id = extension.get_children()[1];
 
@@ -47,6 +47,7 @@ impl LayoutPolicy for Circulation{
 
                 if let Some(thrown_out_profile) = tree.swap_element_profile(last_id, LayoutElementProfile::Bisect(extension)){
                     tree.reserve_element_identity(new_preoccupied_id, thrown_out_profile);
+                    tree.animate_property(last_id, "ratio".to_string(), 0.5f32, false, 125);
                     new_unoccupied_id
                 }
                 else {
