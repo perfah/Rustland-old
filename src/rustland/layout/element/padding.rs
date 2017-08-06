@@ -1,12 +1,15 @@
+use std::cell::RefMut;
+
 use common::definitions::{DefaultNumericType, LayoutElemID};
 use layout::LayoutTree;
-use layout::element::LayoutElement;
+use layout::element::{LayoutElement, LayoutElementProfile};
 use layout::property::{ElementPropertyProvider, PropertyBank};
 use utils::geometry::PointExt;
 
 use wlc::*;
 use num::traits::cast;
 
+#[derive(Clone)]
 pub struct Padding{
     pub child_elem_id: LayoutElemID,
     pub gap_size: u32,
@@ -14,12 +17,14 @@ pub struct Padding{
 }
 
 impl Padding{
-    pub fn init(tree: &mut LayoutTree, gap_size: u32, positioning_offset: Option<Point>) -> Padding{
-        Padding{
-            child_elem_id: tree.spawn_element(),
+    pub fn init(ident: LayoutElemID, tree: &mut LayoutTree, gap_size: u32, positioning_offset: Option<Point>) -> (LayoutElemID, Padding) {
+        let profile = Padding{
+            child_elem_id: tree.spawn_dummy_element(Some(ident)),
             gap_size: gap_size,
             positioning_offset: positioning_offset
-        }
+        };
+
+        (ident, profile)
     }
 
     pub fn get_offset_geometry(&self, outer_geometry: Geometry) -> Geometry{
@@ -41,8 +46,8 @@ impl ElementPropertyProvider for Padding{
     fn register_properties(&self, property_bank: &mut PropertyBank){    
         property_bank.address_property("gap_size".to_string(), make_property_handle!(Padding, u32, gap_size));
 
-        property_bank.address_property("offset_x".to_string(), |element: &mut LayoutElement, new_value: Option<DefaultNumericType>| {
-            assist_property_handle!(Padding, element, padding, {
+        property_bank.address_property("offset_x".to_string(), |profile: &mut LayoutElementProfile, new_value: Option<DefaultNumericType>| {
+            assist_property_handle!(Padding, profile, padding, {
                 if let Some(ref mut offset) = padding.positioning_offset{
                     if let Some(value) = new_value { 
                         offset.x = value as i32; 
@@ -54,8 +59,8 @@ impl ElementPropertyProvider for Padding{
             }
         )});
 
-        property_bank.address_property("offset_y".to_string(), |element: &mut LayoutElement, new_value: Option<DefaultNumericType>| {
-            assist_property_handle!(Padding, element, padding, {
+        property_bank.address_property("offset_y".to_string(), |profile: &mut LayoutElementProfile, new_value: Option<DefaultNumericType>| {
+            assist_property_handle!(Padding, profile, padding, {
                 if let Some(ref mut offset) = padding.positioning_offset{
                     if let Some(value) = new_value { 
                         offset.y = value as i32; 

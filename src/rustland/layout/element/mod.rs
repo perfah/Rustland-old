@@ -1,16 +1,71 @@
 use std::fmt;
-use common::definitions::LayoutElemID;
-use layout::LayoutTree;
-use layout::property::{ElementPropertyProvider, PropertyBank};
+use std::cell::{RefCell, RefMut};
+use std::ops::DerefMut;
 
 pub mod bisect;
 pub mod padding;
 pub mod window;
-pub mod workspaces;
+pub mod grid;
 
-use layout::element::LayoutElement::{Bisect, Padding, Window, Workspaces};
+use common::definitions::LayoutElemID;
+use layout::LayoutTree;
+use layout::element::LayoutElementProfile::{Bisect, Padding, Window, Grid};
+use layout::property::{ElementPropertyProvider, PropertyBank};
 
-pub enum LayoutElement{
+pub struct LayoutElement{
+    pub parent_id: Option<LayoutElemID>,
+    pub element_id: LayoutElemID,
+    profile: RefCell<LayoutElementProfile>,
+    pub properties: PropertyBank
+}
+
+impl LayoutElement {
+    pub fn init_dummy(element_id: LayoutElemID, parent_id: Option<LayoutElemID>) -> LayoutElement {
+        LayoutElement {
+            element_id: element_id,
+            parent_id: parent_id,
+            profile: RefCell::new(LayoutElementProfile::None),
+            properties: PropertyBank::empty()
+        }
+    }
+
+    pub fn get_profile_mut(&self) -> RefMut<LayoutElementProfile> {
+        self.profile.borrow_mut()
+    }
+
+    pub fn set_profile(&mut self, new_profile: LayoutElementProfile) {
+        match new_profile {
+            LayoutElementProfile::Bisect(_) => {},
+            LayoutElementProfile::Grid(_) => {},
+            LayoutElementProfile::Padding(ref padding) => padding.register_properties(&mut self.properties),
+            LayoutElementProfile::Window(_) => {},
+            _ => { println!("Warning: Cannot register properties for an element without a profile."); }
+        }
+        
+        self.profile = RefCell::new(new_profile);
+    }
+
+    pub fn get_property(&mut self, elem_id: LayoutElemID, name: String) -> Option<f32>{
+        let mut profile = self.get_profile_mut();
+
+        if let Some(property_handle) = self.properties.get_handle(name){
+            if let Some(property_value) = property_handle(profile.deref_mut(), None){
+                return property_value.to_f32();
+            }
+        }
+    
+        None
+    }
+
+    pub fn set_property(&mut self, name: String, new_value: f32){
+        if let Some(handle) = self.properties.get_handle(name){
+            handle(self.get_profile_mut().deref_mut(), Some(new_value));
+        }
+    }
+}
+
+#[derive(Clone)]
+pub enum LayoutElementProfile {
     // Unallocated space in the layout
     None,
 
@@ -18,49 +73,11 @@ pub enum LayoutElement{
     Bisect(bisect::Bisect),
 
     // A container of multiple child elements with only one active in a given moment
-    Workspaces(workspaces::Workspaces),
+    Grid(grid::Grid),
     
     // A container that can be smaller in relation to the outside geometry 
     Padding(padding::Padding),
 
     // An arbitrary window/application
     Window(window::Window)
-}
-
-impl ElementPropertyProvider for LayoutElement{
-    fn register_properties(&self, property_bank: &mut PropertyBank){
-        match self{
-            &Bisect(ref bisect) => {},
-            &Workspaces(ref workspaces) => {},
-            &Padding(ref padding) => padding.register_properties(property_bank),
-            &Window(ref window) => {},
-            _ => {}
-        }
-    }
-
-    fn get_property(&mut self, tree: &LayoutTree, elem_id: LayoutElemID, name: String) -> Option<f32>{
-        if let Some(property_bank) = tree.properties.get(&elem_id){
-            if let Some(property_handle) = property_bank.get_handle(name){
-                if let Some(property_value) = property_handle(self, None){
-                    return property_value.to_f32();
-                }
-            }
-        }
-
-        None
-    }
-
-    fn set_property(&mut self, tree: &LayoutTree, elem_id: LayoutElemID, name: String, new_value: f32){
-        if let Some(property_bank) = tree.properties.get(&elem_id){
-            if let Some(handle) = property_bank.get_handle(name){
-                handle(self, Some(new_value));
-            }
-        }
-    }
-}
-
-impl fmt::Debug for LayoutElement{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        unimplemented!();
-    }
 }

@@ -4,7 +4,7 @@ use layout::LayoutTree;
 pub mod circulation;
 
 pub trait LayoutPolicy{
-    fn attach_window(&mut self, tree: &mut LayoutTree) -> LayoutElemID;
+    fn seat_window(&mut self, tree: &mut LayoutTree) -> LayoutElemID;
     fn box_clone(&self) -> Box<LayoutPolicy>;
 }
 

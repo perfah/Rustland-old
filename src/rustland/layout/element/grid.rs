@@ -3,38 +3,37 @@ use std::u16;
 use common::definitions::LayoutElemID;
 use layout::LayoutTree;
 use layout::element::padding::Padding;
-use super::LayoutElement;
+use layout::element::{LayoutElement, LayoutElementProfile};
 
 use wlc::*;
 
 pub enum Direction { LEFT, RIGHT, UP, DOWN }
 
-pub struct Workspaces{
+#[derive(Clone)]
+pub struct Grid{
     active_subspace: usize,
     columns: usize,
     subspace_element_ids: Vec<LayoutElemID> 
 }
 
-impl Workspaces{
-    pub fn init(tree: &mut LayoutTree, columns: usize, rows: usize) -> Workspaces {
-        assert!(columns * rows > 0, "At least one sWorkspaces is r
-    quiered.");
+impl Grid{
+    pub fn init(ident: LayoutElemID, tree: &mut LayoutTree, columns: usize, rows: usize) -> (LayoutElemID, Grid) {
+        assert!(columns * rows > 0, "At least one Grid is required.");
         
         let mut children: Vec<LayoutElemID> = Vec::new();
         for _ in 0..(columns * rows){
-            let spawned_id = tree.spawn_element();
-            let padding = Padding::init(tree, 15, None);
-
-            children.push(spawned_id);
-            tree.insert_element_at(LayoutElement::Padding(padding), spawned_id);
+            let (child_ident, child) = Padding::init(tree.spawn_dummy_element(Some(ident)), tree, 15, None);
+            tree.reserve_element_identity(child_ident, LayoutElementProfile::Padding(child));
+            children.push(child_ident);
         }
         
-        
-    Workspaces{
+        let profile = Grid{
             active_subspace: 0,
             columns: columns,
             subspace_element_ids: children
-        }
+        };
+
+        (ident, profile)
     }
 
     pub fn get_active_child_id(&self) -> LayoutElemID {

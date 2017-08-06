@@ -6,27 +6,29 @@ use utils::geometry::GeometryExt;
 
 use wlc::{View, WeakView, ResizeEdge};
 
+#[derive(Clone)]
 pub struct Window {
     weak_view: Option<WeakView>,
-    child_process: Option<Child>,
     desired_geometry: Geometry,
     inner_offset: Option<u32>
 }
 
 impl Window{
-    fn init(weak_view: WeakView, child_process: Child) -> Window{
-        Window{
-            weak_view: Some(weak_view),
-            child_process: Some(child_process),  
+    fn init(tree: &mut LayoutTree, parent_id: LayoutElemID, weak_view: WeakView, child_process: Child) -> LayoutElemID {
+        let window_ident = tree.spawn_dummy_element(Some(parent_id));
+        
+        let window = Window{
+            weak_view: Some(weak_view), 
             desired_geometry: Geometry::zero(),
             inner_offset: None
-        }
+        };
+
+        window_ident
     }
 
     pub fn init_dummy() -> Window{
         Window{
             weak_view: None,
-            child_process: None,
             desired_geometry: Geometry::zero(),
             inner_offset: None
         }

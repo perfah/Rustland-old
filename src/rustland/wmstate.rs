@@ -25,10 +25,7 @@ unsafe impl Sync for WMState {}
 lazy_static! {
     pub static ref WM_STATE: RwLock<WMState> = RwLock::new(
         WMState{
-            tree: LayoutTree::init(
-                Geometry::new(Point::origin(), FALLBACK_RESOLUTION),
-                1
-            ),
+            tree: LayoutTree::init(Geometry::new(Point::origin(), FALLBACK_RESOLUTION)),
             input_dev: None
         }
     );

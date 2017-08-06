@@ -19,6 +19,7 @@ impl Orientation{
     }
 }
 
+#[derive(Clone)]
 pub struct Bisect{
     children: Vec<LayoutElemID>,
     pub orientation: Orientation,
@@ -26,33 +27,21 @@ pub struct Bisect{
 }
 
 impl Bisect{
-    pub fn init(tree: &mut LayoutTree, orientation: Orientation) -> Bisect{
-        let no_partitions = 2;
+    pub fn init(ident: LayoutElemID, tree: &mut LayoutTree, orientation: Orientation) -> (LayoutElemID, Bisect) {
+        let partitions = 2f32;
         
         let mut children: Vec<LayoutElemID> = Vec::new();
-        for i in 0..no_partitions{
-            children.push(tree.spawn_element())
+        for _ in 0..(partitions as i32){
+            children.push(tree.spawn_dummy_element(Some(ident)));
         }
 
-        Bisect{
+        let profile = Bisect{
             children: children,
             orientation: orientation,
-            ratio: 1.0 / no_partitions as f32
-        }
-    }
-    pub fn init_horiz_50_50(tree: &mut LayoutTree) -> Bisect{
-        Bisect{
-            children: vec![tree.spawn_element(), tree.spawn_element()],
-            orientation: Orientation::Horizontal,
-            ratio: 0.5
-        }
-    }
-    pub fn init_vert_50_50(tree: &mut LayoutTree) -> Bisect{
-        Bisect{
-            children: vec![tree.spawn_element(), tree.spawn_element()],
-            orientation: Orientation::Vertical,
-            ratio: 0.5
-        }
+            ratio: 1.0f32 / (partitions as f32)
+        };
+
+        (ident, profile)
     }
 
     pub fn get_children(&self) -> &Vec<LayoutElemID>{

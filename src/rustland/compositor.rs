@@ -12,12 +12,11 @@ use io::physical::InputDevice;
 use io::tcp_server::handle_incoming_requests;
 use io::process_all_current_jobs;
 use layout::PARENT_ELEMENT;
-use layout::element::LayoutElement;
+use layout::element::{LayoutElement, LayoutElementProfile};
 use layout::element::window::Window;
-use layout::element::workspaces::Direction;
+use layout::element::grid::Direction;
 use layout::LayoutTree;
 use layout::arrangement::*;
-use layout::property::ElementPropertyProvider;
 use utils::geometry::{PointExt, SizeExt, GeometryExt};
 use wmstate::{WM_STATE, PENDING_JOBS, FINALIZED_JOBS, ACTIVE_TRANSITIONS};
 
@@ -48,14 +47,14 @@ impl Callback for Compositor {
             loop{
                 if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.try_lock(){    
                     if !active_transitions.is_empty(){     
-                        if let Ok(mut wm_state) = WM_STATE.write(){  
+                        if let Ok(mut wm_state) = WM_STATE.try_write(){  
 
                             // Continues to step forward each transition
                             for transition in active_transitions.iter_mut(){
                                 transition.next(&mut wm_state.tree, delta);
                             }
 
-                            // Completed transition should be in the list
+                            // Completed transition should not be in the list
                             active_transitions.retain(|ref transition| transition.is_ongoing());
 
                             // A layout refresh is necessary for the changes to apply
@@ -90,10 +89,10 @@ impl Callback for Compositor {
 
             if view.view_type().is_empty(){
                 let mut layout_policy = wm_state.tree.layout_policy.clone();
-                let window_elem_id = layout_policy.attach_window(&mut wm_state.tree);
+                let window_elem_id = layout_policy.seat_window(&mut wm_state.tree);
                 wm_state.tree.layout_policy = layout_policy;
 
-                wm_state.tree.insert_element_at(LayoutElement::Window(window), window_elem_id);  
+                wm_state.tree.reserve_element_identity(window_elem_id, LayoutElementProfile::Window(window));  
                 
                 let mut tag = format!("{}", window_elem_id);
 
@@ -155,8 +154,8 @@ impl Callback for Compositor {
                 let mut new_workspace_offset = None;
                 if sym == Key::Left || sym == Key::Right || sym == Key::Up || sym == Key::Down {
                     if let Some(mut element) = wm_state.tree.lookup_element(1) {
-                        match *element{
-                            LayoutElement::Workspaces(ref mut wrkspc) => {
+                        match *element.get_profile_mut(){
+                            LayoutElementProfile::Grid(ref mut wrkspc) => {
                                 wrkspc.switch_to_subspace_in_direction(
                                     match sym{
                                         Key::Left => Direction::LEFT,

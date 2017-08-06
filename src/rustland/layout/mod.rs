@@ -13,33 +13,28 @@ use std::cell::*;
 use std::cell::*;
 use std::sync::RwLock;
 use std::rc::Rc;
-use std::borrow::BorrowMut;
+use std::borrow::{Borrow, BorrowMut};
 use std::ops::Deref;
 
 use wmstate::*;
-use common::definitions::{DefaultNumericType, LayoutElemID, MAX_WORKSPACES_LIMIT};
+use common::definitions::{DefaultNumericType, LayoutElemID};
 use layout::element::LayoutElement;
 use layout::element::bisect::*;
-use layout::element::workspaces::*;
+use layout::element::grid::*;
 use layout::element::padding::*;
-use layout::element::window::*;
+use layout::element::LayoutElementProfile;
 use layout::policy::LayoutPolicy;
 use layout::policy::circulation::Circulation;
-use layout::property::{ElementPropertyProvider, PropertyBank};
+use layout::property::PropertyBank;
 use layout::transition::Transition;
-use utils::interpolation::NumericInterpolation;
-use utils::interpolation::methods::LinearInterpolator;
-use utils::geometry::{PointExt, SizeExt, GeometryExt};
+use utils::geometry::PointExt;
 use layout::tag::*;
 
-use wlc::{View, Output};
+use wlc::Output;
 
 pub const PARENT_ELEMENT: LayoutElemID = 0;
 
 pub struct LayoutTree{
-    // the currently active workspace
-    active_workspace: u16,
-
     // the index of the last added element
     active_id: LayoutElemID,
 
@@ -47,7 +42,7 @@ pub struct LayoutTree{
     pub focused_id: LayoutElemID,
 
     // the available workspaces of the layout 
-    elements: HashMap<LayoutElemID, RefCell<LayoutElement>>,
+    elements: Vec<RefCell<LayoutElement>>,
 
     // the complete geometrical surface of all monitors 
     outer_geometry: Geometry,
@@ -56,42 +51,34 @@ pub struct LayoutTree{
     pub tags: TagRegister,
 
     pub layout_policy: Box<LayoutPolicy>,
-
-    properties: HashMap<LayoutElemID, PropertyBank>
 }
 
 impl LayoutTree {
-    pub fn init(outer_geometry: Geometry, no_monitors: u16) -> Self{
-        const default_workspace: u16 = 1; 
-        assert!(default_workspace <= 1 as u16, "The minimum number of workspaces required are {}", default_workspace);
-
+    pub fn init(outer_geometry: Geometry) -> Self{
         let mut tree = LayoutTree{
-            active_id: PARENT_ELEMENT,  
+            active_id: PARENT_ELEMENT   ,  
             focused_id: PARENT_ELEMENT,
-            active_workspace: default_workspace,
-            elements: HashMap::new(),
+            elements: Vec::new(),
             tags: TagRegister::init(),
             outer_geometry: outer_geometry,
-            layout_policy: Box::new(Circulation::init()),
-            properties: HashMap::new()
+            layout_policy: Box::new(Circulation::init())
         };
 
-        tree.tags.tag_element_on_condition("root", |elem_id, wm_state| elem_id == PARENT_ELEMENT);
+        tree.tags.tag_element_on_condition("root", |elem_id, _| elem_id == PARENT_ELEMENT);
         tree.tags.tag_element_on_condition("focused", |elem_id, wm_state| elem_id == wm_state.tree.focused_id);
 
-        //Place root 
-        let parent_id = tree.spawn_element();
-        let padding = Padding::init(&mut tree, 0, Some(Point::origin()));
+        // Root element
+        let (root_ident, root_profile) = Padding::init(tree.spawn_dummy_element(None), &mut tree, 0, Some(Point::origin()));
+        
+        // Workspaces
+        let (grid_ident, grid_profile) = Grid::init(root_profile.child_elem_id, &mut tree, 2, 2);
 
-        let workspaces = Workspaces::init(&mut tree, 2, 2);
-        tree.insert_element_at(LayoutElement::Workspaces(workspaces), padding.child_elem_id);
-
-        // Insert root element
-        tree.insert_element_at(LayoutElement::Padding(padding), parent_id);
+        tree.reserve_element_identity(root_ident, LayoutElementProfile::Padding(root_profile));
+        tree.reserve_element_identity(grid_ident, LayoutElementProfile::Grid(grid_profile));
 
         tree
-    }
 
+    }
     pub fn refresh(wm_state: &mut WMState){
         TagRegister::refresh_tag_statuses(wm_state);
 
@@ -100,10 +87,16 @@ impl LayoutTree {
     }
 
     pub fn lookup_element(&self, elem_id: LayoutElemID) -> Option<RefMut<LayoutElement>>{   
-        match self.elements.get(&elem_id)
-        {
-            Some(element) => Some(element.borrow_mut()),
-            None => { panic!("Element out of reach.") }
+        let position = self.elements.iter().position(|element: &RefCell<LayoutElement>| {
+            match element.try_borrow(){
+                Ok(elem) => elem.element_id == elem_id,
+                _ => false
+            }
+        });
+        
+        match position{
+            Some(index) =>  unsafe { Some(self.elements.get_unchecked(index).borrow_mut()) },
+            None => None
         }
     }
 
@@ -111,15 +104,16 @@ impl LayoutTree {
         let mut element_references = Vec::<RefMut<LayoutElement>>::new();
         
         for elem_id in self.tags.address_element_by_tag(tag){
-            match self.elements.get(&elem_id)
+            match self.lookup_element(elem_id)
             {
-                Some(element) => { element_references.push(element.borrow_mut()) },
-                None => { panic!("Element out of reach.") }
-            }
+                Some(element_ref) => { element_references.push(element_ref); },
+                None => {}
+            };
         }
 
         element_references
     }
+    
     pub fn lookup_element_from_view(&self, view_pid: i32) -> LayoutElemID{
         match self.tags.view_bindings.get(&view_pid)
         {
@@ -128,55 +122,50 @@ impl LayoutTree {
         }
     }
 
-    pub fn insert_element_at(&mut self, new_element: LayoutElement, elem_id: LayoutElemID) -> Option<RefCell<LayoutElement>>{
-        new_element.register_properties(self.properties.get_mut(&elem_id).expect("An element with this has not spawned?!"));
-
-        self.swap_cell(elem_id, RefCell::new(new_element))
-    }
-
-    pub fn swap_cell(&mut self, elem_id: LayoutElemID, new_cell: RefCell<LayoutElement>) -> Option<RefCell<LayoutElement>>{
-        match *(new_cell.borrow()){
-            LayoutElement::Window(ref window) => { 
-                if let Some(ref view) = window.get_view(){
-                    self.tags.view_bindings.insert(view.pid(), elem_id); 
-                }
-            }
-            _ => {}
-        }
-
-        (*new_cell.borrow()).register_properties(self.properties.get_mut(&elem_id).expect("An element with this id has not spawned?!"));
-
-        let old_cell = self.elements.insert(
-            elem_id, 
-            new_cell
-        );
-
-        if let Some(ref old_element) = old_cell{
-            match *(old_element.borrow()){
-                LayoutElement::Window(ref window) => { 
-                    if let Some(ref view) = window.get_view(){    
-                        self.tags.view_bindings.remove(&view.pid()); 
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        old_cell
-    }
-
-    pub fn spawn_element(&mut self) -> LayoutElemID{
-        self.elements.insert(self.active_id, RefCell::new(LayoutElement::None));
-        self.properties.insert(self.active_id, PropertyBank::new());
+    pub fn spawn_dummy_element(&mut self, parent_id: Option<LayoutElemID>) -> LayoutElemID{
+        self.elements.push(RefCell::new(LayoutElement::init_dummy(self.active_id, parent_id)));
 
         self.active_id += 1;
         return self.active_id - 1;
     } 
 
-    fn detach_element(&mut self, element_id: LayoutElemID) {
-        self.insert_element_at(LayoutElement::None, element_id);
+    pub fn reserve_element_identity(&mut self, identity_to_reserv: LayoutElemID, profile: LayoutElementProfile) {
+        if let LayoutElementProfile::Window(ref window) = profile { 
+            if let Some(ref view) = window.get_view(){
+                self.tags.view_bindings.insert(view.pid(), identity_to_reserv); 
+            }
+        }
+        
+        if let Some(ref mut element) = self.lookup_element(identity_to_reserv) {
+            element.set_profile(profile);
+        }
     }
 
+    pub fn swap_element_profile(&mut self, identity: LayoutElemID, new_profile: LayoutElementProfile) -> Option<LayoutElementProfile> {
+        let mut old_profile = None; 
+
+        if let LayoutElementProfile::Window(ref window) = new_profile { 
+            if let Some(ref view) = window.get_view(){
+                self.tags.view_bindings.insert(view.pid(), identity); 
+            }
+        }
+
+        if let Some(ref mut element) = self.lookup_element(identity) {
+            old_profile = Some(element.get_profile_mut().clone());
+
+            element.set_profile(new_profile);
+        }
+
+        if let Some(ref profile) = old_profile {
+            if let &LayoutElementProfile::Window(ref window) = profile { 
+                if let Some(ref view) = window.get_view(){
+                    self.tags.view_bindings.remove(&view.pid()); 
+                }
+            }
+        }
+
+        old_profile
+    } 
 
     pub fn root(&self) -> RefMut<LayoutElement>{
         match self.lookup_element(PARENT_ELEMENT)
@@ -189,21 +178,22 @@ impl LayoutTree {
     pub fn get_all_element_ids(&self) -> Vec<LayoutElemID>{
         let mut elements_ids = Vec::new();
 
-        for elem_id in self.elements.keys() {
-            elements_ids.push(elem_id.clone())
+        for element in self.elements.iter() {
+            elements_ids.push(element.borrow().element_id.clone())
         }
 
         elements_ids
     }
 
     pub fn last_window_id(&self) -> Option<LayoutElemID>{
+        /*
         let mut i = self.active_id - 1;
         
         while {
             if let Some(a) = self.elements.get(&i)
             {   
-                match *a.borrow(){
-                    LayoutElement::Window(ref window) => { return Some(i) }
+                match a.borrow().profile {
+                    LayoutElementProfile::Window(ref window) => { return Some(i) }
                     _ => { true }
                 }
             }
@@ -216,7 +206,7 @@ impl LayoutTree {
                 _ => { i -= 1; }
             }
         };
-
+    */
         None        
     }
 
@@ -229,18 +219,23 @@ impl LayoutTree {
     }
 
     pub fn get_element_properties(&self, elem_id: LayoutElemID) -> Option<&PropertyBank>{
-        self.properties.get(&elem_id)
+        if let Some(element) = self.lookup_element(elem_id)  {
+            None //Some(&element.properties)
+        }
+        else {
+            None
+        }
     }
 
     pub fn transition_element(&mut self, element_id: LayoutElemID, transitioning_property: String, new_value: DefaultNumericType, relative_transition: bool, time_frame_ms: u64){
         if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.lock(){    
             if let Some(ref mut elem) = self.lookup_element(element_id){
-                if let Some(value_origin) = (*elem).get_property(self, element_id, transitioning_property.clone()){
+                if let Some(value_origin) = (*elem).get_property(element_id, transitioning_property.clone()){
                     active_transitions.push(Transition::new(element_id, transitioning_property, value_origin, new_value, relative_transition, time_frame_ms));
                 }
                 else{
                     // Something unexpected happened so we go directly to new value without a transition
-                    (*elem).set_property(self, element_id, transitioning_property.clone(), if relative_transition { new_value } else { panic!("Can't find element!")});
+                    elem.set_property(transitioning_property.clone(), if relative_transition { new_value } else { panic!("Can't find element!")});
                 }
             }
         }

@@ -24,8 +24,8 @@ impl InterpolationMethod for QuadraticInterpolator{
 }
 
 /// An interpolation method that decelerates the motion.
-pub struct DecelerationInterpolator;
-impl InterpolationMethod for DecelerationInterpolator{
+pub struct SineInterpolator;
+impl InterpolationMethod for SineInterpolator{
     fn calc_progression(&self, x: f32) -> f32 { x.sin() * x.sin() }
     fn get_left_bound(&self) -> DefaultNumericType { 0f32 }
     fn get_right_bound(&self) -> DefaultNumericType { 1.57f32 }
