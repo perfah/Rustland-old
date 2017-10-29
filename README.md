@@ -4,15 +4,15 @@ Rustland
 What is it?
 -----------
 
-  Inspired feature-wise by dynamic window managers like [i3](https://i3wm.org/) and [bspwm](https://github.com/baskerville/bspwm), Rustland is a project of the same category. 
+  Inspired feature-wise by [dynamic window managers](https://en.wikipedia.org/wiki/Dynamic_window_manager) like [i3](https://i3wm.org/) and [bspwm](https://github.com/baskerville/bspwm), this project is aiming for the the same category. 
   
-  Unlike them however, Rustland is not an **x11** window manager, but instead more specifically a **[Wayland](https://wayland.freedesktop.org/) compositor** with a similar although not at all interchangeable role. 
+  Unlike them however, Rustland is technically a **[Wayland](https://wayland.freedesktop.org/) compositor** rather than a traditional x11 window manager. 
   
-  The intention is to contribute to the Wayland ecosystem by creating a counterpart to the typical x11 [dynamic window manager](https://en.wikipedia.org/wiki/Dynamic_window_manager). My aim is not to clone any preexisting ones but to implement one from my own interpretation of one and with features I have deemed to have potential. These include: automatic window tiling, multiple workspaces, network transparency, visual sugar (window gaps, transitions, etc) and more. 
+ The intention is to create a future-proof window manager carrying some of the more powerful features of older projects in the category. It will probably not be exactly like what you have seen before, but automatic window tiling, multiple workspaces and flexible customization are some of the goals.
   
-  Rustland is (lo and behold) written in Rust, but **still in the alpha stages meaning that it probably won't fit your needs just yet**. 
+  Rustland is (lo and behold) written in Rust, but **still in the alpha stages so it probably won't fit your needs just yet**. 
 
-  <img align="right" width="549" height="361" src="https://i.gyazo.com/9d8d6f9d7956d11e958c4dbd7154b497.png">
+  <img align="right" width="549" height="361" src="https://i.imgur.com/CITMr8c.gif">
 
 Current state 
 -------------
@@ -22,10 +22,6 @@ Current state
  - Tag system for referencing items in the layout, e.g. both '@focused' and '@firefox' references Firefox should it be the focused application in your layout
  - Network transparency (via TCP) allows for potential interaction with the compositor from various applications/platsforms. 
  - Fancy window gaps and layout transitions
-
-Custom configuration as a development stage has been delay which means that some things are still hardcoded:
- - Layout gap of 15 pixels
- - 2x2 grid of workspaces
 
 rlctl, a compositor interaction utility
 ---------------------------------------
@@ -37,8 +33,8 @@ Example syntax: ``rlctl tree``, ``rlctl runapp /usr/bin/thunar``, ``rlctl @thuna
 [*more information*](https://github.com/perfah/Rustland/wiki/rlctl,-a-compositor-interaction-utility)
    
    
-Features in the near future
----------------------------
+Near goals
+----------
 
 * Background wallpaper
 * Window borders
