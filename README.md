@@ -1,16 +1,13 @@
 Rustland
 ========
 
-What is it?
------------
+  Wayland compositor written in Rust.
 
-  Inspired feature-wise by [dynamic window managers](https://en.wikipedia.org/wiki/Dynamic_window_manager) like [i3](https://i3wm.org/) and [bspwm](https://github.com/baskerville/bspwm), this project is aiming for the the same category. 
-  
-  Unlike them however, Rustland is technically a **[Wayland](https://wayland.freedesktop.org/) compositor** rather than a traditional x11 window manager. 
+Inspired feature-wise by [dynamic window managers](https://en.wikipedia.org/wiki/Dynamic_window_manager) like [i3](https://i3wm.org/) and [bspwm](https://github.com/baskerville/bspwm), this project is aiming for the the same category. Unlike them however, Rustland is technically a **[Wayland](https://wayland.freedesktop.org/) compositor** rather than a traditional x11 window manager. 
   
  The intention is to create a future-proof window manager carrying some of the more powerful features of older projects in the category. It will probably not be exactly like what you have seen before, but automatic window tiling, multiple workspaces and flexible customization are some of the goals.
   
-  Rustland is (lo and behold) written in Rust, but **still in the alpha stages so it probably won't fit your needs just yet**. 
+  Rustland is **still in the alpha stages so it probably won't fit your needs just yet**. 
 
   <img align="right" width="549" height="361" src="https://i.imgur.com/CITMr8c.gif">
 
@@ -23,6 +20,17 @@ Current state
  - Network transparency (via TCP) allows for potential interaction with the compositor from various applications/platsforms. 
  - Fancy window gaps and layout transitions
 
+Upcoming features
+-----------------
+
+* Background wallpaper
+* Window borders
+* Configuration/customization 
+* More structured network transparency
+* Snapshots for saving and loading layouts
+* Modularity (potentially)
+(not in order)
+
 rlctl, a compositor interaction utility
 ---------------------------------------
 
@@ -31,17 +39,6 @@ This is developed alongside the compositor and makes use of the built-in TCP fun
 Example syntax: ``rlctl tree``, ``rlctl runapp /usr/bin/thunar``, ``rlctl @thunar moveto @root``
    
 [*more information*](https://github.com/perfah/Rustland/wiki/rlctl,-a-compositor-interaction-utility)
-   
-   
-Near goals
-----------
-
-* Background wallpaper
-* Window borders
-* Configuration/customization 
-* More structured network transparency
-* Snapshots for saving and loading layouts
-* Modularity (potentially)
 
 Contribution
 ------------
