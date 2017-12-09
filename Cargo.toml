@@ -16,10 +16,14 @@ name = "rlctl"
 path = "src/rlctl/main.rs"
 
 [dependencies]
-wlc = "2.0.1"
+wlc = { version = "2.0.1", features = ["render"] }
 lazy_static = "0.2.4"
 serde = "0.9.11"
 serde_derive = "0.9.11"
 serde_json = "0.9.9"
 num = "0.1.37"
 num-traits = "0.1.37"
+egli = "0.2.1"
+image = "*"
+gl = "0.6.0"
+thread_tryjoin = "0.2.0"

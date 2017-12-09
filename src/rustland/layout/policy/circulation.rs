@@ -1,8 +1,14 @@
+use std::ops::DerefMut;
+
+use common::definitions::LayoutElemID;
 use layout::{LayoutTree, PARENT_ELEMENT};
 use layout::arrangement:: {find_first_unoccupied, find_all_windows};
 use layout::element::{LayoutElement, LayoutElementProfile};
 use layout::element::bisect::{Orientation, Bisect};
 use layout::policy::*;
+use wmstate::WMState;
+
+use gl::types::GLuint;
 
 /*
     Generates a clockwise rotating layout 
@@ -47,7 +53,7 @@ impl LayoutPolicy for Circulation{
 
                 if let Some(thrown_out_profile) = tree.swap_element_profile(last_id, LayoutElementProfile::Bisect(extension)){
                     tree.reserve_element_identity(new_preoccupied_id, thrown_out_profile);
-                    tree.animate_property(last_id, "ratio".to_string(), 0.5f32, false, 125);
+                    tree.animate_property(last_id, "ratio", 0.5f32, false, 125);
                     new_unoccupied_id
                 }
                 else {
@@ -56,6 +62,22 @@ impl LayoutPolicy for Circulation{
             }
             else{
                 panic!("Last index did not exist!");
+            }
+        }
+    }
+
+    fn decorate_window(&mut self, wm_state: &mut RwLockWriteGuard<WMState>, element_ident: LayoutElemID) {
+        let &mut WMState{ref tree, ref mut graphics_program, ..} = wm_state.deref_mut();
+       
+        if let Some(element) = tree.lookup_element(element_ident){
+            match *element.get_profile_mut(){
+                LayoutElementProfile::Window(ref mut window) => {
+                    if let &mut Some(ref mut program) = graphics_program{
+                        window.apply_frame(element_ident, program, 0f32);
+                        tree.animate_property_after_delay(element_ident, "frame_opacity", 0f32, 0.7f32, false, 500, 200);
+                    }
+                },
+                _ => {}
             }
         }
     }

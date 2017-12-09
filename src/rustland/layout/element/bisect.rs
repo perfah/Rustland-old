@@ -105,6 +105,6 @@ impl Bisect{
 
 impl ElementPropertyProvider for Bisect{
     fn register_properties(&self, property_bank: &mut PropertyBank){    
-        property_bank.address_property("ratio".to_string(), make_property_handle!(Bisect, f32, ratio));
+        property_bank.address_property("ratio", make_property_handle!(Bisect, f32, ratio));
     }
 }

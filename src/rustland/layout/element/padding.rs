@@ -5,7 +5,7 @@ use common::definitions::{DefaultNumericType, LayoutElemID};
 use layout::LayoutTree;
 use layout::element::{LayoutElement, LayoutElementProfile};
 use layout::property::{ElementPropertyProvider, PropertyBank};
-use utils::geometry::PointExt;
+use utils::geometry::{PointExt, GeometryExt};
 
 use wlc::*;
 use num::traits::cast;
@@ -14,6 +14,7 @@ use num::traits::cast;
 pub struct Padding{
     pub child_elem_id: LayoutElemID,
     pub gap_size: u32,
+    pub inner_scale: f32, 
     pub positioning_offset: Option<Point>
 }
 
@@ -22,14 +23,16 @@ impl Padding{
         let profile = Padding{
             child_elem_id: tree.spawn_dummy_element(Some(ident)),
             gap_size: gap_size,
+            inner_scale: 1.0f32,
             positioning_offset: positioning_offset
         };
 
         (ident, profile)
     }
 
-    pub fn get_offset_geometry(&self, outer_geometry: Geometry) -> Geometry{
+    pub fn get_offset_geometry(&self, outer_geometry: Geometry, stacked_scale: &mut f32) -> Geometry{
         let offset = self.positioning_offset.unwrap_or(Point::origin());
+
         Geometry{
             origin: Point{ 
                 x: offset.x + outer_geometry.origin.x + self.gap_size as i32, 
@@ -39,15 +42,17 @@ impl Padding{
                 w: max(0, outer_geometry.size.w - self.gap_size.checked_mul(2).unwrap_or_default()),
                 h: max(0, outer_geometry.size.h - self.gap_size.checked_mul(2).unwrap_or_default())
             }
-        }
+        }.scaled(self.inner_scale)
     }
 }
 
 impl ElementPropertyProvider for Padding{
     fn register_properties(&self, property_bank: &mut PropertyBank){    
-        property_bank.address_property("gap_size".to_string(), make_property_handle!(Padding, u32, gap_size));
+        property_bank.address_property("gap_size", make_property_handle!(Padding, u32, gap_size));
+        
+        property_bank.address_property("inner_scale", make_property_handle!(Padding, u32, inner_scale));
 
-        property_bank.address_property("offset_x".to_string(), |profile: &mut LayoutElementProfile, new_value: Option<DefaultNumericType>| {
+        property_bank.address_property("offset_x", |profile: &mut LayoutElementProfile, new_value: Option<DefaultNumericType>| {
             assist_property_handle!(Padding, profile, padding, {
                 if let Some(ref mut offset) = padding.positioning_offset{
                     if let Some(value) = new_value { 
@@ -60,7 +65,7 @@ impl ElementPropertyProvider for Padding{
             }
         )});
 
-        property_bank.address_property("offset_y".to_string(), |profile: &mut LayoutElementProfile, new_value: Option<DefaultNumericType>| {
+        property_bank.address_property("offset_y", |profile: &mut LayoutElementProfile, new_value: Option<DefaultNumericType>| {
             assist_property_handle!(Padding, profile, padding, {
                 if let Some(ref mut offset) = padding.positioning_offset{
                     if let Some(value) = new_value { 

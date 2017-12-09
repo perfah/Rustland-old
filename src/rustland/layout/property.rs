@@ -43,7 +43,7 @@ pub trait ElementPropertyProvider{
 }
 
 pub struct PropertyBank{
-    properties: HashMap<String, Box<handle_function>>
+    properties: HashMap<&'static str, Box<handle_function>>
 }
 
 impl PropertyBank{
@@ -53,15 +53,21 @@ impl PropertyBank{
         }
     }
 
-    pub fn address_property<T>(&mut self, name: String, handle: T) where T: Fn(&mut LayoutElementProfile, Option<DefaultNumericType>) -> Option<&ToPrimitive> + 'static{
+    pub fn address_property<T>(&mut self, name: &'static str, handle: T) where T: Fn(&mut LayoutElementProfile, Option<DefaultNumericType>) -> Option<&ToPrimitive> + 'static{
         self.properties.insert(name, Box::new(handle));
     }
 
-    pub fn get_all_property_names(&self) -> Vec<&String>{
-        Vec::from_iter(self.properties.keys())
+    pub fn get_all_property_names(&self) -> Vec<&'static str>{
+        let mut prop_names = Vec::new();
+        
+        for prop_name in self.properties.keys() {
+            prop_names.push(*prop_name);
+        }
+
+        prop_names
     }
 
-    pub fn get_handle(&self, handle: String) -> Option<&Box<handle_function>>{
+    pub fn get_handle(&self, handle: &'static str) -> Option<&Box<handle_function>>{
         self.properties.get(&handle)
     }
 }

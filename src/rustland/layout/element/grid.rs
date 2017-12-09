@@ -75,13 +75,13 @@ impl Grid{
         &self.subspace_element_ids
     }
 
-    pub fn get_offset_geometry(&self, display_geometry: Geometry, outer_geometry: Geometry, this_desktop: u16) -> Geometry{
+    pub fn get_offset_geometry(&self, display_geometry: Geometry, outer_geometry: Geometry, this_desktop: u16, stacked_scale: &mut f32) -> Geometry{
         let index = this_desktop as i32;
-        
+
         Geometry{
             origin: Point{
-                x: outer_geometry.origin.x + (index % self.columns as i32) * display_geometry.size.w as i32,
-                y: outer_geometry.origin.y + (index / self.columns as i32) * display_geometry.size.h as i32
+                x: outer_geometry.origin.x + ((index % self.columns as i32) as f32 * display_geometry.size.w as f32 * (*stacked_scale)) as i32,
+                y: outer_geometry.origin.y + ((index / self.columns as i32) as f32 * display_geometry.size.h as f32 * (*stacked_scale)) as i32
             },
             size: outer_geometry.size
         }

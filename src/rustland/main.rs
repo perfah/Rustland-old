@@ -10,6 +10,11 @@
 pub extern crate wlc;
 pub extern crate num;
 pub extern crate num_traits;
+pub extern crate egli;
+pub extern crate image;
+pub extern crate gl;
+pub extern crate thread_tryjoin;
+
 extern crate common;
 
 mod layout;
@@ -17,6 +22,8 @@ mod io;
 mod utils;
 mod compositor;
 mod wmstate;
+mod sugars;
+mod async;
 
 use compositor::Compositor;
 

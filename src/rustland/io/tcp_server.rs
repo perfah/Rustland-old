@@ -17,20 +17,6 @@ lazy_static! {
         };
 }
 
-pub fn handle_incoming_requests(){
-    if let Some(ref tcp_socket) = *TCP_SOCKET{
-        if let Ok(ref socket_instance) = tcp_socket.lock(){
-            for stream in socket_instance.incoming() {
-                match stream {
-                    Ok(mut stream) => {
-                        handle_client(stream);
-                    }
-                    Err(e) => { /* connection failed */ }
-                }
-            }
-        }
-    }
-}
 
 pub fn handle_client(mut stream: TcpStream) {
     println!("Client {} connected. Now ready accept jobs it.", stream.peer_addr().unwrap());

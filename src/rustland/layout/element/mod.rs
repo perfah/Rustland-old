@@ -1,6 +1,6 @@
 use std::fmt;
 use std::cell::{RefCell, RefMut};
-use std::ops::DerefMut;
+use std::ops::{Deref, DerefMut};
 
 pub mod bisect;
 pub mod padding;
@@ -8,7 +8,6 @@ pub mod window;
 pub mod grid;
 
 use common::definitions::LayoutElemID;
-use layout::LayoutTree;
 use layout::element::LayoutElementProfile::{Bisect, Padding, Window, Grid};
 use layout::property::{ElementPropertyProvider, PropertyBank};
 
@@ -29,6 +28,13 @@ impl LayoutElement {
         }
     }
 
+    pub fn has_profile(&self) -> bool {
+         match *self.profile.borrow_mut() {
+             LayoutElementProfile::None => true,
+             _ => false
+         }
+    }
+
     pub fn get_profile_mut(&self) -> RefMut<LayoutElementProfile> {
         self.profile.borrow_mut()
     }
@@ -39,13 +45,13 @@ impl LayoutElement {
             LayoutElementProfile::Grid(_) => {},
             LayoutElementProfile::Padding(ref padding) => padding.register_properties(&mut self.properties),
             LayoutElementProfile::Window(_) => {},
-            _ => { println!("Warning: Cannot register properties for an element without a profile."); }
+            _ => { println!("Warning: No properties registered for element {}", self.element_id); }
         }
         
         self.profile = RefCell::new(new_profile);
     }
 
-    pub fn get_property(&mut self, name: String) -> Option<f32>{
+    pub fn get_property(&mut self, name: &'static str) -> Option<f32>{
         let mut profile = self.get_profile_mut();
 
         if let Some(property_handle) = self.properties.get_handle(name){
@@ -57,7 +63,7 @@ impl LayoutElement {
         None
     }
 
-    pub fn set_property(&mut self, name: String, new_value: f32){
+    pub fn set_property(&mut self, name: &'static str , new_value: f32){
         if let Some(handle) = self.properties.get_handle(name){
             handle(self.get_profile_mut().deref_mut(), Some(new_value));
         }
@@ -80,4 +86,18 @@ pub enum LayoutElementProfile {
 
     // An arbitrary window/application
     Window(window::Window)
+}
+
+impl fmt::Display for LayoutElementProfile {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", 
+            match self {
+                &LayoutElementProfile::Bisect(_) => "bisect",
+                &LayoutElementProfile::Grid(_) => "grid",
+                &LayoutElementProfile::Padding(_) => "padding",
+                &LayoutElementProfile::Window(_) => "window",
+                _ => "n/a"
+            }
+        )
+    }
 }

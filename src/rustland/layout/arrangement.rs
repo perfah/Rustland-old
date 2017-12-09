@@ -36,14 +36,14 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
     let format_props = |elem_id, elem: &mut RefMut<LayoutElement>|{
         let mut output = String::new();
 
-        if let Some(property_bank) = tree.get_element_properties(elem_id){
-            let mut property_names = property_bank.get_all_property_names();
+        if let Some(element) = tree.lookup_element(elem_id) {
+            let mut property_names = element.properties.get_all_property_names();
             property_names.sort();
 
             for property_name in property_names{
-                if let Some(property_value) = elem.get_property(property_name.clone()){
+                if let Some(property_value) = elem.get_property(property_name) {
                     output.push_str(PROPERTY_PREFIX);
-                    output.push_str(property_name.as_str());
+                    output.push_str(property_name);
                     output.push_str("=");
                     output.push_str(format!("{}", property_value).as_str());
                 }
@@ -155,27 +155,29 @@ pub fn find_first_unoccupied(tree: &LayoutTree, outer_element_id: LayoutElemID) 
     return None;
 }
 
-pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry: Geometry, stacked_padding: &mut Option<u32>){
-    if let Some(mut outer_element) = tree.lookup_element(outer_element_id){
+pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry: Geometry, stacked_padding: &mut Option<u32>, stacked_scale: &mut f32){
+    if let Some(outer_element) = tree.lookup_element(outer_element_id){
         match *outer_element.get_profile_mut(){
             LayoutElementProfile::Bisect(ref bisect) => {               
                 for (i, child_id) in bisect.get_children().iter().enumerate() {   
                     // Recursion
-                    arrange(tree, *child_id, bisect.get_offset_geometry(outer_geometry, stacked_padding, i as i32), stacked_padding);
+                    arrange(tree, *child_id, bisect.get_offset_geometry(outer_geometry, stacked_padding, i as i32), stacked_padding, stacked_scale);
                 }
             },
-            LayoutElementProfile::Grid(ref wrkspc) => {               
+            LayoutElementProfile::Grid(ref wrkspc) => { 
                 for (i, child_id) in wrkspc.get_all_children().iter().enumerate() {   
                     // Recursion
-                    arrange(tree, *child_id, wrkspc.get_offset_geometry(tree.get_outer_geometry(), outer_geometry, i as u16), stacked_padding);
+                    arrange(tree, *child_id, wrkspc.get_offset_geometry(tree.get_outer_geometry(), outer_geometry, i as u16, stacked_scale), stacked_padding, stacked_scale);
                 }
             },
             LayoutElementProfile::Padding(ref mut padding) => {
+                *stacked_scale *= padding.inner_scale;
                 *stacked_padding = Some(padding.gap_size);
                 
                 // Recursion
-                arrange(tree, padding.child_elem_id, padding.get_offset_geometry(outer_geometry), stacked_padding);
+                arrange(tree, padding.child_elem_id, padding.get_offset_geometry(outer_geometry, stacked_scale), stacked_padding, stacked_scale);
                 
+                *stacked_scale /= if padding.inner_scale != 0f32 { padding.inner_scale } else { panic!("Scaling can't be 0.") };
                 *stacked_padding = None;
             },
             LayoutElementProfile::Window(ref mut window) => {

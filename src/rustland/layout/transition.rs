@@ -5,14 +5,14 @@ use utils::interpolation::methods::SineInterpolator;
 
 pub struct Transition{
     pub element_id: LayoutElemID,
-    pub transitioning_property: String,
+    pub transitioning_property: &'static str,
     interpolation: NumericInterpolation,
     time_frame_ms: u64,
     delay_ms: u64
 }
 
 impl Transition{
-    pub fn new(element_id: LayoutElemID, transitioning_property: String, value_origin: DefaultNumericType, value_dest: DefaultNumericType, relative_transition: bool, time_frame_ms: u64, delay_ms: u64) -> Transition{
+    pub fn new(element_id: LayoutElemID, transitioning_property: &'static str, value_origin: DefaultNumericType, value_dest: DefaultNumericType, relative_transition: bool, time_frame_ms: u64, delay_ms: u64) -> Transition{
         let interpolation = NumericInterpolation::new(
             box SineInterpolator{}, 
             value_origin, 
