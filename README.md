@@ -17,18 +17,21 @@ Current state
  - [x] On-demand like creation of window layouts 
  - [x] Automatic circular window tiling
  - [x] Background wallpapers, window gaps and layout transitions
+ - [x] Command for showing an overview of the layout (the different workspaces) 
  - [x] Tag system for referencing items in the layout, e.g. both '@focused' and '@firefox' references Firefox should it be the focused application in your layout
- - [x] Some network transparency (via TCP) allows for potential interaction with the compositor from various applications/platsforms. 
+ - [x] Some network transparency (via TCP) - allows for potential interaction with the compositor from various applications/platsforms. 
  - [ ] Configution and customization
  - [ ] Window decorations: borders, etc..
- - [ ] Snapshots for saving and loading layouts
- - [ ] Layout interaction: resizing windows, ..
+ - [ ] "Snapshots" for saving and loading layouts
+ - [ ] Layout interaction: resizing windows with mouse, keyboard shortcuts..
+ - [ ] Floating windows
 
 Interesting directions this project could take
 ----------------------------------------------
 
-* Dbus integration (for plugins) 
-* 
+* Dbus integration (for plugins perhaps) 
+* More advanced network transparancy
+* Lockscreen
 
 rlctl, a compositor interaction utility
 ---------------------------------------
