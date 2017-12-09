@@ -5,7 +5,7 @@ Rustland
 
 Inspired feature-wise by [dynamic window managers](https://en.wikipedia.org/wiki/Dynamic_window_manager) like [i3](https://i3wm.org/) and [bspwm](https://github.com/baskerville/bspwm), this project is aiming for the the same category. Unlike them however, Rustland is technically a **[Wayland](https://wayland.freedesktop.org/) compositor** rather than a traditional x11 window manager. 
   
- The intention is to create a future-proof window manager carrying some of the more powerful features of older projects in the category. It will probably not be exactly like what you have seen before, but automatic window tiling, multiple workspaces and flexible customization are some of the goals.
+ The intention is to create a future-proof window manager carrying some of the more powerful features of older projects in the category. This project is probably not aiming for exactly what you have seen before, but automatic window tiling, multiple workspaces and flexible customization are some of the goals.
   
   Rustland is **still in the alpha stages so it probably won't fit your needs just yet**. 
 
@@ -14,22 +14,21 @@ Inspired feature-wise by [dynamic window managers](https://en.wikipedia.org/wiki
 Current state 
 -------------
 
- - On-demand like creation of window layouts 
- - Automatic circular window tiling
- - Tag system for referencing items in the layout, e.g. both '@focused' and '@firefox' references Firefox should it be the focused application in your layout
- - Network transparency (via TCP) allows for potential interaction with the compositor from various applications/platsforms. 
- - Fancy window gaps and layout transitions
+ - [x] On-demand like creation of window layouts 
+ - [x] Automatic circular window tiling
+ - [x] Background wallpapers, window gaps and layout transitions
+ - [x] Tag system for referencing items in the layout, e.g. both '@focused' and '@firefox' references Firefox should it be the focused application in your layout
+ - [x] Some network transparency (via TCP) allows for potential interaction with the compositor from various applications/platsforms. 
+ - [ ] Configution and customization
+ - [ ] Window decorations: borders, etc..
+ - [ ] Snapshots for saving and loading layouts
+ - [ ] Layout interaction: resizing windows, ..
 
-Upcoming features
------------------
+Interesting directions this project could take
+----------------------------------------------
 
-* Background wallpaper
-* Window borders
-* Configuration/customization 
-* More structured network transparency
-* Snapshots for saving and loading layouts
-* Modularity (potentially)
-(not in order)
+* Dbus integration (for plugins) 
+* 
 
 rlctl, a compositor interaction utility
 ---------------------------------------
