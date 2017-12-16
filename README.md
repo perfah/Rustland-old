@@ -3,13 +3,13 @@ Rustland
 
   Wayland compositor written in Rust.
 
+<img align="center" width="900" height="450" src="https://i.imgur.com/KXpG6vE.gifv">
+
 Inspired feature-wise by [dynamic window managers](https://en.wikipedia.org/wiki/Dynamic_window_manager) like [i3](https://i3wm.org/) and [bspwm](https://github.com/baskerville/bspwm), this project is aiming for the the same category. Unlike them however, Rustland is technically a **[Wayland](https://wayland.freedesktop.org/) compositor** rather than a traditional x11 window manager. 
   
  The intention is to create a future-proof window manager carrying some of the more powerful features of older projects in the category. This project is probably not aiming for exactly what you have seen before, but automatic window tiling, multiple workspaces and flexible customization are some of the goals.
   
   Rustland is **still in the alpha stages so it probably won't fit your needs just yet**. 
-
-  <img align="right" width="549" height="361" src="https://i.imgur.com/CITMr8c.gif">
 
 Current state 
 -------------
