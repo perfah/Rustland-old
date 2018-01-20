@@ -1,4 +1,6 @@
-use std::cmp::max;
+use std::collections::HashMap;
+use std::collections::hash_map::Entry;
+use std::cmp::{Eq, max};
 use num::{cast, abs};
 
 use layout::*;
@@ -14,6 +16,7 @@ pub enum Orientation{
     Horizontal,
     Vertical,
 }
+
 impl Orientation{
     pub fn opposite(&self) -> Self{
         match *self{
@@ -23,21 +26,48 @@ impl Orientation{
     }
 }
 
+impl Copy for Orientation {}
+
+#[derive(Clone, Hash)]
+pub enum Side {
+    Left,
+    Right,
+    Neither
+}
+
+impl Side{
+    pub fn opposite(&self) -> Self{
+        match *self{
+            Side::Left => Side::Right,
+            Side::Right => Side::Left,
+            Side::Neither => panic!("No opposite of unspecified side!")
+        }
+    }
+}
+
+
+impl PartialEq for Side {
+    fn eq(&self, other: &Self) -> bool {
+        match self {
+            other => true,
+            _ => false
+        }
+    }
+}
+impl Eq for Side {}
+
 #[derive(Clone)]
 pub struct Bisect{
-    children: Vec<LayoutElemID>,
+    children: HashMap<Side, LayoutElemID>,
     pub orientation: Orientation,
     pub ratio: f32
 }
 
 impl Bisect{
     pub fn init(ident: LayoutElemID, tree: &mut LayoutTree, orientation: Orientation, ratio: f32) -> (LayoutElemID, Bisect) {
-        assert!(ratio > 0f32, "The ratio must be greater than zero!");
-        
-        let mut children: Vec<LayoutElemID> = Vec::new();
-        for _ in 0..2{
-            children.push(tree.spawn_dummy_element(Some(ident)));
-        }
+        let mut children = HashMap::new();
+        children.insert(Side::Left, tree.spawn_dummy_element(Some(ident)));
+        children.insert(Side::Right, tree.spawn_dummy_element(Some(ident)));
 
         let profile = Bisect{
             children: children,
@@ -48,14 +78,50 @@ impl Bisect{
         (ident, profile)
     }
 
-    pub fn get_children(&self) -> &Vec<LayoutElemID>{
-        &self.children
+    pub fn seat_child_on_side(&mut self, side: Side, child_ident: LayoutElemID) -> (Side, Option<LayoutElemID>){
+        (side.clone(), self.children.insert(side, child_ident))
     }
 
-    pub fn get_children_mut(&mut self) -> &mut Vec<LayoutElemID>{
-        &mut self.children
+    pub fn try_seat_child(&mut self, child_ident: LayoutElemID) -> Side {
+        let mut iter = [Side::Left, Side::Right].iter();
+
+        while let Some(side) = iter.next(){
+            self.children.entry(side.clone()).or_insert(child_ident);
+            // CHILD MUST BE NONE!!!
+        }
+
+        self.child_side(child_ident)
     }
 
+    pub fn disown_child(&mut self, child_ident: LayoutElemID){
+        self.children.retain(|_, &mut v| v != child_ident);
+    }
+
+
+    pub fn count_active_children(&self, tree: &LayoutTree) -> i32 {
+        let mut iter = self.children_iter();
+        let mut output = 0;
+
+        while let Some(child_ident) = iter.next() {
+            if tree.lookup_element(*child_ident).map_or(false, |child| !child.profile.is_none()) {
+                output += 1;
+            }
+        }
+
+        return output;
+    }
+
+    pub fn child_side(&self, element_ident: LayoutElemID) -> Side {
+        match self.children.values().position(|&e| e == element_ident){
+            Some(p) if p == 0 => Side::Left,
+            Some(p) if p == 1 => Side::Right,
+            _ => Side::Neither
+        }
+    }
+
+    pub fn children_iter(&self) -> impl Iterator<Item = &LayoutElemID> {
+        self.children.values()
+    }
 
     pub fn get_orientation(self) -> Orientation{
         self.orientation
@@ -63,6 +129,7 @@ impl Bisect{
 
     pub fn get_offset_geometry(&self, outer_geometry: Geometry, stacked_padding: &Option<u32>, child_index: i32) -> Geometry{
         let padding = (*stacked_padding).unwrap_or(0 as u32);
+        let child_scale_factor = if child_index == 0 { self.ratio } else { 1.0f32 - self.ratio };
 
         Geometry{
             origin: match self.orientation{
@@ -83,18 +150,17 @@ impl Bisect{
                     }
                 }
             },
-            size: match self.orientation
-            {
+            size: match self.orientation {
                 Orientation::Horizontal => {  
                     Size{
-                        w: max(0i32, (self.ratio * outer_geometry.size.w as f32) as i32 - padding as i32 / 2) as u32,
+                        w: max(0i32, ( child_scale_factor * outer_geometry.size.w as f32) as i32 - padding as i32 / 2) as u32,
                         h: outer_geometry.size.h
                     }
                 }
                 Orientation::Vertical => {
                     Size{
                         w: outer_geometry.size.w,
-                        h: max(0i32, (self.ratio * outer_geometry.size.h as f32) as i32 - padding as i32 / 2) as u32
+                        h: max(0i32, ( child_scale_factor * outer_geometry.size.h as f32) as i32 - padding as i32 / 2) as u32
                     }
                 }
             }

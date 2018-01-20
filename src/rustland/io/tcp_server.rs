@@ -36,13 +36,13 @@ pub fn handle_client(mut stream: TcpStream) {
                         pending_jobs.push(job);
                     }
                 },
-                _ => {}
+                Err(e) => { panic!("ERROR = {}", e) }
             }
         }
 
         process_all_current_jobs();
 
-        while let Some(job) = FINALIZED_JOBS.lock().unwrap().pop(){
+        while let Some(job) = FINALIZED_JOBS.try_lock().unwrap().pop(){
             writer.write_all(serde_json::to_string(&job).unwrap().as_bytes());
             writer.write(&[SOCKET_DETERMINANT]);
         }

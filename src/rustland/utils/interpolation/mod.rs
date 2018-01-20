@@ -40,7 +40,7 @@ impl NumericInterpolation{
             (self.interpolation_method.calc_progression(right_bound) - self.interpolation_method.calc_progression(left_bound))
         );
 
-        // Update the targeted outer value to the current iteration value:
+        // Update the targeted outer value to the current iteration value:start_pole
         *output = T::from_f32(self.start_pole + progress * (self.end_pole - self.start_pole)).unwrap();
 
         // Jump to the next intervall

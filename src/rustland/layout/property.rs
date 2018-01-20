@@ -18,7 +18,7 @@ macro_rules! assist_property_handle{
             &mut LayoutElementProfile::$profile_type(ref mut $profile_nick) => {
                 $handling
             },
-            _ => panic!("Element is not of the needed type.")
+            _ => None
         }
     })
 }
@@ -33,7 +33,7 @@ macro_rules! make_property_handle{
 
                 Some(&matched_profile.$var_name)
             },
-            _ => panic!("Element is not of the needed type.") 
+            _ => None
         }
     })
 }

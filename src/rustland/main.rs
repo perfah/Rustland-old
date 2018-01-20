@@ -1,6 +1,7 @@
 #![feature(box_syntax, box_patterns)]
 #![feature(associated_consts)]
 #![feature(use_extern_macros)] 
+#![feature(conservative_impl_trait)] 
 #[allow(inaccessible_extern_crate)]
 
 #[macro_use] pub extern crate lazy_static;

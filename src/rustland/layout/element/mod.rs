@@ -14,7 +14,7 @@ use layout::property::{ElementPropertyProvider, PropertyBank};
 pub struct LayoutElement{
     pub parent_id: Option<LayoutElemID>,
     pub element_id: LayoutElemID,
-    profile: RefCell<LayoutElementProfile>,
+    pub profile: LayoutElementProfile,
     pub properties: PropertyBank
 }
 
@@ -23,20 +23,9 @@ impl LayoutElement {
         LayoutElement {
             element_id: element_id,
             parent_id: parent_id,
-            profile: RefCell::new(LayoutElementProfile::None),
+            profile: LayoutElementProfile::None,
             properties: PropertyBank::empty()
         }
-    }
-
-    pub fn has_profile(&self) -> bool {
-         match *self.profile.borrow_mut() {
-             LayoutElementProfile::None => true,
-             _ => false
-         }
-    }
-
-    pub fn get_profile_mut(&self) -> RefMut<LayoutElementProfile> {
-        self.profile.borrow_mut()
     }
 
     pub fn set_profile(&mut self, new_profile: LayoutElementProfile) {
@@ -45,17 +34,16 @@ impl LayoutElement {
             LayoutElementProfile::Grid(_) => {},
             LayoutElementProfile::Padding(ref padding) => padding.register_properties(&mut self.properties),
             LayoutElementProfile::Window(_) => {},
+            LayoutElementProfile::None => {}
             _ => { println!("Warning: No properties registered for element {}", self.element_id); }
         }
         
-        self.profile = RefCell::new(new_profile);
+        self.profile = new_profile;
     }
 
     pub fn get_property(&mut self, name: &'static str) -> Option<f32>{
-        let mut profile = self.get_profile_mut();
-
         if let Some(property_handle) = self.properties.get_handle(name){
-            if let Some(property_value) = property_handle(profile.deref_mut(), None){
+            if let Some(property_value) = property_handle(&mut self.profile, None){
                 return property_value.to_f32();
             }
         }
@@ -65,9 +53,9 @@ impl LayoutElement {
 
     pub fn set_property(&mut self, name: &'static str , new_value: f32){
         if let Some(handle) = self.properties.get_handle(name){
-            handle(self.get_profile_mut().deref_mut(), Some(new_value));
+            handle(&mut self.profile, Some(new_value));
         }
-    }
+    }   
 }
 
 #[derive(Clone)]
@@ -88,6 +76,15 @@ pub enum LayoutElementProfile {
     Window(window::Window)
 }
 
+impl LayoutElementProfile {
+    pub fn is_none(&self) -> bool{
+        match *self {
+            LayoutElementProfile::None => true,
+            _ => false 
+        }
+    } 
+}
+
 impl fmt::Display for LayoutElementProfile {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", 
@@ -101,3 +98,8 @@ impl fmt::Display for LayoutElementProfile {
         )
     }
 }
+
+trait ElementContainer{
+    fn disown_child(&mut self, element_ident: LayoutElemID);
+}
+

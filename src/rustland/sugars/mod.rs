@@ -1,5 +1,6 @@
 pub mod program;
 pub mod frame;
+pub mod solid_color;
 pub mod wallpaper;
 
 use self::program::GraphicsProgram;

@@ -50,6 +50,10 @@ impl Window{
         self.weak_view = Some(weak_view);
     }
 
+    pub fn detach_view(&mut self) -> Option<WeakView>{
+        self.weak_view.take()
+    }
+
     pub fn get_view(&self) -> Option<&View>{
         if let Some(ref weak_view) = self.weak_view{
             unsafe { weak_view.upgrade() }

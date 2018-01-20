@@ -24,13 +24,13 @@ use layout::element::grid::*;
 use layout::element::padding::*;
 use layout::element::LayoutElementProfile;
 use layout::policy::LayoutPolicy;
-use layout::policy::circulation::Circulation;
+use layout::policy::auto_circulation::AutoCirculation;
 use layout::property::PropertyBank;
 use layout::transition::Transition;
 use utils::geometry::PointExt;
 use layout::tag::*;
 
-use wlc::Output;
+use wlc::{Output, View, WeakView};
 
 pub const PARENT_ELEMENT: LayoutElemID = 0;
 
@@ -54,14 +54,14 @@ pub struct LayoutTree{
 }
 
 impl LayoutTree {
-    pub fn init(outer_geometry: Geometry) -> Self{
+    pub fn init(outer_geometry: Geometry, grid_w: usize, grid_h: usize) -> Self{
         let mut tree = LayoutTree{
             active_id: PARENT_ELEMENT   ,  
             focused_id: PARENT_ELEMENT,
             elements: Vec::new(),
             tags: TagRegister::init(),
             outer_geometry: outer_geometry,
-            layout_policy: Box::new(Circulation::init())
+            layout_policy: box AutoCirculation::init(grid_w * grid_h)
         };
 
         tree.tags.tag_element_on_condition("root", |elem_id, _| elem_id == PARENT_ELEMENT);
@@ -75,7 +75,7 @@ impl LayoutTree {
         tree.tags.tag_element("workspace_selection", wrkspc_sel_ident);
 
         // Workspaces
-        let (grid_ident, grid_profile) = Grid::init(wrkspc_sel_profile.child_elem_id, &mut tree, 3, 3);
+        let (grid_ident, grid_profile) = Grid::init(wrkspc_sel_profile.child_elem_id, &mut tree, grid_w, grid_h);
 
         tree.reserve_element_identity(root_ident, LayoutElementProfile::Padding(root_profile));
         tree.reserve_element_identity(wrkspc_sel_ident, LayoutElementProfile::Padding(wrkspc_sel_profile));
@@ -122,11 +122,10 @@ impl LayoutTree {
         element_references
     }
     
-    pub fn lookup_element_from_view(&self, view_pid: i32) -> LayoutElemID{
-        match self.tags.view_bindings.get(&view_pid)
-        {
-            Some(element_id) => *element_id,
-            None => { panic!("Element not found!"); }
+    pub fn lookup_element_from_view(&self, view: &View) -> Option<LayoutElemID>{
+        match self.tags.view_bindings.keys().find(|&x| *x == view.weak_reference()){
+            Some(key) => self.tags.view_bindings.get(&key).cloned(),
+            None => None
         }
     }
 
@@ -135,12 +134,16 @@ impl LayoutTree {
 
         self.active_id += 1;
         return self.active_id - 1;
+    }
+
+    pub fn remove_view_binding_to(&mut self, element_ident: LayoutElemID) {
+        self.tags.view_bindings.retain(|_, &mut v| v != element_ident);
     } 
 
     pub fn reserve_element_identity(&mut self, identity_to_reserv: LayoutElemID, profile: LayoutElementProfile) {
         if let LayoutElementProfile::Window(ref window) = profile { 
             if let Some(ref view) = window.get_view(){
-                self.tags.view_bindings.insert(view.pid(), identity_to_reserv); 
+                self.tags.view_bindings.insert(view.weak_reference(), identity_to_reserv); 
             }
         }
         
@@ -155,12 +158,12 @@ impl LayoutTree {
 
         if let LayoutElementProfile::Window(ref window) = new_profile { 
             if let Some(ref view) = window.get_view(){
-                self.tags.view_bindings.insert(view.pid(), identity); 
+                self.tags.view_bindings.insert(view.weak_reference(), identity); 
             }
         }
 
         if let Some(ref mut element) = self.lookup_element(identity) {
-            old_profile = Some(element.get_profile_mut().clone());
+            old_profile = Some(element.profile.clone());
 
             element.set_profile(new_profile);
         }
@@ -168,7 +171,7 @@ impl LayoutTree {
         if let Some(ref profile) = old_profile {
             if let &LayoutElementProfile::Window(ref window) = profile { 
                 if let Some(ref view) = window.get_view(){
-                    self.tags.view_bindings.remove(&view.pid()); 
+                    self.tags.view_bindings.remove(&view.weak_reference()); 
                 }
             }
         }
@@ -182,6 +185,12 @@ impl LayoutTree {
             Some(parent) => parent,
             None => { panic!("Root not found!"); }
         }
+    }
+
+    pub fn parent_of(&self, element_ident: LayoutElemID) -> LayoutElemID {
+        self.
+            lookup_element(element_ident).expect("Element does not exist or is already borrowed!")
+            .parent_id.expect("Element does not have a parent!")
     }
 
     pub fn get_all_element_ids(&self) -> Vec<LayoutElemID>{
@@ -203,28 +212,43 @@ impl LayoutTree {
     }
 
     pub fn animate_property(&self, element_id: LayoutElemID, transitioning_property: &'static str, new_value: DefaultNumericType, relative_transition: bool, time_frame_ms: u64){
+        self.animate_property_after_delay(element_id, transitioning_property, new_value, relative_transition, time_frame_ms, 0);
+    }
+
+    pub fn animate_element_property(&self, element: &mut LayoutElement, transitioning_property: &'static str, new_value: DefaultNumericType, relative_transition: bool, time_frame_ms: u64){
+        let prev_value = element.get_property(transitioning_property)
+            .expect("animate_property_after_delay: Profile does not provide the property.");
+        
         if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.lock(){    
-            if let Some(ref mut elem) = self.lookup_element(element_id){
-                if let Some(value_origin) = elem.get_property(transitioning_property){
-                    active_transitions.push(Transition::new(element_id, transitioning_property, value_origin, new_value, relative_transition, time_frame_ms, 0));
-                }
-                else{
-                    // Something unexpected happened so we go directly to new value without a transition
-                    let profile_name = elem.get_profile_mut().to_string();
-                    elem.set_property(transitioning_property, 
-                        if relative_transition { new_value } 
-                        else { panic!(format!("The '{}' profile for identity [{}] won't provide the property '{}', which is necessary for the operation.", profile_name, element_id, transitioning_property)) 
-                    });
-                }
-            }
+            active_transitions.push(Transition::new(element.element_id, transitioning_property, prev_value, new_value, relative_transition, time_frame_ms, 0));
         }
     }
 
-    pub fn animate_property_after_delay(&self, element_id: LayoutElemID, transitioning_property: &'static str, prev_value: DefaultNumericType, new_value: DefaultNumericType, relative_transition: bool, time_frame_ms: u64, delay_ms: u64){
-        if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.lock(){    
-            if let Some(ref mut elem) = self.lookup_element(element_id){
-                active_transitions.push(Transition::new(element_id, transitioning_property, prev_value, new_value, relative_transition, time_frame_ms, delay_ms));
+    pub fn animate_property_after_delay(&self, element_id: LayoutElemID, transitioning_property: &'static str, new_value: DefaultNumericType, relative_transition: bool, time_frame_ms: u64, delay_ms: u64){
+        assert!(time_frame_ms != 0u64, "Time frame can't be zero!");
+        
+        if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.lock(){   
+            let mut elem = self.lookup_element(element_id)
+                .expect("animate_property_after_delay: Either element identy does exist or it is already borrowed! Maybe use the explicit call instead?");
+                
+            if let Some(value_origin) = elem.get_property(transitioning_property){
+                active_transitions.push(Transition::new(element_id, transitioning_property, value_origin, new_value, relative_transition, time_frame_ms, delay_ms));
             }
+            else{
+                // Something unexpected happened so we go directly to new value without a transition
+                let profile_name = elem.profile.to_string();
+
+                match relative_transition { 
+                    true => elem.set_property(transitioning_property, new_value),
+                    false => println!("animate_property_after_delay: Profile '{}' of identity [{}] does not provide the property '{}'.", profile_name, element_id, transitioning_property)
+                }
+            }
+        }   
+    }
+
+    pub fn animate_property_explicitly(&self, element_id: LayoutElemID, transitioning_property: &'static str, prev_value: DefaultNumericType, new_value: DefaultNumericType, relative_transition: bool, time_frame_ms: u64, delay_ms: u64){
+        if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.lock(){    
+            active_transitions.push(Transition::new(element_id, transitioning_property, prev_value, new_value, relative_transition, time_frame_ms, delay_ms));
         }
     }
 }

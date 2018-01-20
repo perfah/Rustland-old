@@ -39,9 +39,9 @@ impl Padding{
                 y: offset.y + outer_geometry.origin.y + self.gap_size as i32
             },
             size: Size{ 
-                w: max(0, outer_geometry.size.w - self.gap_size.checked_mul(2).unwrap_or_default()),
-                h: max(0, outer_geometry.size.h - self.gap_size.checked_mul(2).unwrap_or_default())
-            }
+                w: outer_geometry.size.w.checked_sub(self.gap_size.checked_mul(2).unwrap_or_default()).unwrap_or_default(),
+                h: outer_geometry.size.h.checked_sub(self.gap_size.checked_mul(2).unwrap_or_default()).unwrap_or_default()
+            }   
         }.scaled(self.inner_scale)
     }
 }

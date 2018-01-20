@@ -5,6 +5,7 @@ use std::fmt;
 use common::definitions::{TAG_PREFIX, PROPERTY_PREFIX, LayoutElemID};
 use layout::LayoutTree;
 use layout::element::{LayoutElement, LayoutElementProfile};
+use layout::element::bisect::Side;
 use layout::arrangement;
 use wmstate::*;
 use utils::geometry::GeometryExt;
@@ -33,24 +34,24 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
         output
     };
 
-    let format_props = |elem_id, elem: &mut RefMut<LayoutElement>|{
+    let format_props = |elem_id, element: &mut RefMut<LayoutElement>|{
         let mut output = String::new();
 
-        if let Some(element) = tree.lookup_element(elem_id) {
-            let mut property_names = element.properties.get_all_property_names();
-            property_names.sort();
+        
+        let mut property_names = element.properties.get_all_property_names();
+        property_names.sort();
 
-            for property_name in property_names{
-                if let Some(property_value) = elem.get_property(property_name) {
-                    output.push_str(PROPERTY_PREFIX);
-                    output.push_str(property_name);
-                    output.push_str("=");
-                    output.push_str(format!("{}", property_value).as_str());
-                }
-                
-                output.push_str(" ");
+        for property_name in property_names{
+            if let Some(property_value) = element.get_property(property_name) {
+                output.push_str(PROPERTY_PREFIX);
+                output.push_str(property_name);
+                output.push_str("=");
+                output.push_str(format!("{}", property_value).as_str());
             }
+            
+            output.push_str(" ");
         }
+        
 
         output
     };
@@ -60,13 +61,13 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
         let tags = format_tags(outer_element_id);
         let props = format_props(outer_element_id, &mut outer_element);
 
-        match *outer_element.get_profile_mut(){
+        match outer_element.profile{
             LayoutElementProfile::Bisect(ref element) => {
                 indent(*indentation_whtspcs, f);
                 writeln!(f, "├──[{}] Bisect: {} {}", outer_element_id, tags, props);
 
                 *indentation_whtspcs += 1;
-                for (i, child_id) in element.get_children().iter().enumerate()
+                for (i, child_id) in element.children_iter().enumerate()
                 {;
                     //Recursion
                     arrangement::tree(tree, f, *child_id, indentation_whtspcs);
@@ -124,7 +125,9 @@ pub fn tree(tree: &LayoutTree, f: &mut fmt::Formatter, outer_element_id: LayoutE
 
 pub fn find_first_unoccupied(tree: &LayoutTree, outer_element_id: LayoutElemID) -> Option<LayoutElemID>{
     if let Some(ref mut outer_element) =  tree.lookup_element(outer_element_id){
-        match *outer_element.get_profile_mut() {
+        let bisect_ratio = outer_element.get_property("ratio");
+
+        match outer_element.profile {
             LayoutElementProfile::None => {
                 return Some(outer_element_id);
             },
@@ -135,8 +138,18 @@ pub fn find_first_unoccupied(tree: &LayoutTree, outer_element_id: LayoutElemID) 
                 }
             },
             LayoutElementProfile::Bisect(ref bisect) =>{
-                for element_id in bisect.get_children()
-                {
+                let mut iter = bisect.children_iter();
+
+                while let Some(&child_ident) = iter.next(){
+                    if let Some(element) = tree.lookup_element(child_ident){
+                        if element.profile.is_none() {
+                            tree.animate_property_explicitly(outer_element_id, "ratio", bisect_ratio.unwrap(), 0.5f32, false, 125, 0);    
+                            return Some(child_ident);
+                        }
+                    }
+                }
+
+                for element_id in bisect.children_iter() {
                     // Recursion to another layer of depth in the tree structure
                     if let Some(candidate_id) = find_first_unoccupied(tree, *element_id){
                         return Some(candidate_id);
@@ -156,10 +169,10 @@ pub fn find_first_unoccupied(tree: &LayoutTree, outer_element_id: LayoutElemID) 
 }
 
 pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry: Geometry, stacked_padding: &mut Option<u32>, stacked_scale: &mut f32){
-    if let Some(outer_element) = tree.lookup_element(outer_element_id){
-        match *outer_element.get_profile_mut(){
+    if let Some(mut outer_element) = tree.lookup_element(outer_element_id){
+        match outer_element.profile{
             LayoutElementProfile::Bisect(ref bisect) => {               
-                for (i, child_id) in bisect.get_children().iter().enumerate() {   
+                for (i, child_id) in bisect.children_iter().enumerate() {   
                     // Recursion
                     arrange(tree, *child_id, bisect.get_offset_geometry(outer_geometry, stacked_padding, i as i32), stacked_padding, stacked_scale);
                 }
@@ -197,13 +210,13 @@ pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry
 
 pub fn find_all_windows(matches: &mut Vec<LayoutElemID>, needs_to_be_active: bool, tree: &LayoutTree, outer_element_id: LayoutElemID) {
     if let Some(ref mut outer_element) =  tree.lookup_element(outer_element_id){
-        match *outer_element.get_profile_mut() {
+        match outer_element.profile {
             LayoutElementProfile::Padding(ref padding) => {
                 // Recursion to another layer of depth in the tree structure
                 find_all_windows(matches, needs_to_be_active, tree, padding.child_elem_id);
             },
             LayoutElementProfile::Bisect(ref bisect) =>{
-                for candidate_id in bisect.get_children() {
+                for candidate_id in bisect.children_iter() {
                     // Recursion to another layer of depth in the tree structure
                     find_all_windows(matches, needs_to_be_active, tree, *candidate_id);
                 }
@@ -230,12 +243,9 @@ pub fn find_all_windows(matches: &mut Vec<LayoutElemID>, needs_to_be_active: boo
 
 pub fn move_element(wm_state: &mut WMState, carry: LayoutElemID, destination: LayoutElemID) -> Result<String, String>{
     if let Some(mut destination) = wm_state.tree.lookup_element(destination){
-        match *destination.get_profile_mut() {
+        match destination.profile {
             LayoutElementProfile::Bisect(ref mut bisect) => {
-                let children = bisect.get_children_mut();
-                children.push(carry);
-
-                Ok(String::from("Element moved"))
+                Err(String::from("Unimplemented!"))         
             },
             LayoutElementProfile::Grid(ref mut wrkspc) => {
                 Err(String::from(""))
@@ -246,4 +256,32 @@ pub fn move_element(wm_state: &mut WMState, carry: LayoutElemID, destination: La
     else{
         Err(String::from("Destination element missing in layout."))
     }
+}
+
+
+pub fn element_at_index(tree: &LayoutTree, outer_element_id: LayoutElemID, index: &mut i32) -> LayoutElemID{
+    if let Some(ref mut outer_element) =  tree.lookup_element(outer_element_id){
+        match outer_element.profile {
+            LayoutElementProfile::Window(ref window) => {
+                *index += 1;
+            },
+            LayoutElementProfile::Padding(ref padding) => {
+                // Recursion to another layer of depth in the tree structure
+                element_at_index(tree, padding.child_elem_id, index);
+            },
+            LayoutElementProfile::Bisect(ref bisect) =>{
+                for element_id in bisect.children_iter() {
+                    // Recursion to another layer of depth in the tree structure
+                    element_at_index(tree, element_id, index);
+                }
+            },
+            LayoutElementProfile::Grid(ref grid) => {
+                // Recursion to another layer of depth in the tree structure
+                *index += 1;
+                element_at_index(tree, grid.children_iter(), index);
+            },
+            _ => {}
+        }
+    }
+    return None;
 }

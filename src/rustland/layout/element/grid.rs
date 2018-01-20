@@ -1,4 +1,5 @@
 use std::u16;
+use num::clamp;
 
 use common::definitions::LayoutElemID;
 use layout::LayoutTree;
@@ -22,7 +23,7 @@ impl Grid{
         
         let mut children: Vec<LayoutElemID> = Vec::new();
         for _ in 0..(columns * rows){
-            let (child_ident, child) = Padding::init(tree.spawn_dummy_element(Some(ident)), tree, 15, None);
+            let (child_ident, child) = Padding::init(tree.spawn_dummy_element(Some(ident)), tree, 200, None);
             tree.reserve_element_identity(child_ident, LayoutElementProfile::Padding(child));
             children.push(child_ident);
         }
@@ -43,36 +44,38 @@ impl Grid{
         }   
     }
 
-    pub fn get_active_subspace(&self) -> usize{
+    pub fn active_subspace(&self) -> usize{
         self.active_subspace
     }
 
     pub fn set_active_subspace(&mut self, new_subspace: i16){
-        if new_subspace <= usize::min_value() as i16{
-            self.active_subspace = 0
-        }
-        else if new_subspace >= self.subspace_element_ids.len() as i16 {
-            self.active_subspace = self.subspace_element_ids.len() - 1;
-        }
-        else{
-            self.active_subspace = new_subspace as usize;
-        }
+        self.active_subspace = clamp(
+            new_subspace as usize, 
+            0usize, 
+            (self.subspace_element_ids.len() - 1) as usize
+        );
     }
 
     pub fn switch_to_subspace_in_direction(&mut self, direction: Direction){
         let active_subspace = self.active_subspace as i16;
-        let desktop_columns = self.columns as i16;
+        let x_tot = self.columns as i16;
+        let xy_tot = self.subspace_element_ids.len() as i16;
 
-        match direction{
-            Direction::LEFT => self.set_active_subspace(active_subspace - 1i16),
-            Direction::RIGHT => self.set_active_subspace(active_subspace + 1i16),
-            Direction::UP => self.set_active_subspace(active_subspace - desktop_columns),
-            Direction::DOWN => self.set_active_subspace(active_subspace + desktop_columns)
-        }
+        self.set_active_subspace(active_subspace as i16 + match direction{
+            Direction::LEFT if active_subspace % x_tot > 0 => -1i16,
+            Direction::RIGHT if (active_subspace + 1i16) % x_tot > 0 => 1i16,
+            Direction::UP if (active_subspace - x_tot) >= 0 => -x_tot,
+            Direction::DOWN if (active_subspace + x_tot) < xy_tot => x_tot,
+            _ => 0i16
+        });      
     }
 
     pub fn get_all_children(&self) -> &Vec<LayoutElemID> {
         &self.subspace_element_ids
+    }
+
+    pub fn children_iter(&self) -> impl Iterator<Item = &LayoutElemID> {
+        &self.subspace_element_ids.iter()
     }
 
     pub fn get_offset_geometry(&self, display_geometry: Geometry, outer_geometry: Geometry, this_desktop: u16, stacked_scale: &mut f32) -> Geometry{

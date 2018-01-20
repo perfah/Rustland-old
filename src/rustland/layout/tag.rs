@@ -11,12 +11,16 @@ use wmstate::PENDING_JOBS;
 use layout::element::LayoutElement;
 use layout::LayoutTree;
 
+use wlc::WeakView;
+
 pub struct TagRegister{
     // bindings between tags and n LayoutElements  
     bindings: HashMap<String, Vec<LayoutElemID>>,
 
     // bindings between element ids and View PID:s
-    pub view_bindings: HashMap<ViewPID, LayoutElemID>,
+    pub view_bindings: HashMap<WeakView, LayoutElemID>,
+
+    pub view_pid_bindings: HashMap<ViewPID, LayoutElemID>,
 
     // closure functions (values) determining whether LayoutElements can be addressed by specific tags (keys) 
     tag_conditions: HashMap<String, Box<Fn(LayoutElemID, &WMState) -> bool>>
@@ -27,6 +31,7 @@ impl TagRegister{
         TagRegister{
             bindings: HashMap::new(),
             view_bindings: HashMap::new(),
+            view_pid_bindings: HashMap::new(),
             tag_conditions: HashMap::new()
         }
     }
@@ -36,7 +41,7 @@ impl TagRegister{
         {
             ElementID(elem_id) => { vec![elem_id] },
             ViewPID(view_pid) => {
-                if let Some(elem_id) = self.view_bindings.get(&view_pid){
+                if let Some(elem_id) = self.view_pid_bindings.get(&view_pid){
                     vec![*elem_id]
                 }
                 else{
