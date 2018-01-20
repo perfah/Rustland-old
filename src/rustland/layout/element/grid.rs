@@ -75,7 +75,7 @@ impl Grid{
     }
 
     pub fn children_iter(&self) -> impl Iterator<Item = &LayoutElemID> {
-        &self.subspace_element_ids.iter()
+        self.subspace_element_ids.iter()
     }
 
     pub fn get_offset_geometry(&self, display_geometry: Geometry, outer_geometry: Geometry, this_desktop: u16, stacked_scale: &mut f32) -> Geometry{

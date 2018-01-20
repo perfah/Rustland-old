@@ -258,30 +258,3 @@ pub fn move_element(wm_state: &mut WMState, carry: LayoutElemID, destination: La
     }
 }
 
-
-pub fn element_at_index(tree: &LayoutTree, outer_element_id: LayoutElemID, index: &mut i32) -> LayoutElemID{
-    if let Some(ref mut outer_element) =  tree.lookup_element(outer_element_id){
-        match outer_element.profile {
-            LayoutElementProfile::Window(ref window) => {
-                *index += 1;
-            },
-            LayoutElementProfile::Padding(ref padding) => {
-                // Recursion to another layer of depth in the tree structure
-                element_at_index(tree, padding.child_elem_id, index);
-            },
-            LayoutElementProfile::Bisect(ref bisect) =>{
-                for element_id in bisect.children_iter() {
-                    // Recursion to another layer of depth in the tree structure
-                    element_at_index(tree, element_id, index);
-                }
-            },
-            LayoutElementProfile::Grid(ref grid) => {
-                // Recursion to another layer of depth in the tree structure
-                *index += 1;
-                element_at_index(tree, grid.children_iter(), index);
-            },
-            _ => {}
-        }
-    }
-    return None;
-}

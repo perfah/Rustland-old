@@ -96,7 +96,7 @@ lazy_static! {
 
     pub static ref PENDING_JOBS: Mutex<Vec<Job> >= Mutex::new(Vec::new());
     pub static ref FINALIZED_JOBS: Mutex<Vec<Job>> = Mutex::new(Vec::new()); 
-    pub static ref ACTIVE_TRANSITIONS: RwLock<Vec<Transition>> = RwLock::new(Vec::new());
+    pub static ref ACTIVE_TRANSITIONS: Mutex<Vec<Transition>> = Mutex::new(Vec::new());
 }
 
 unsafe impl Send for ACTIVE_TRANSITIONS {}
