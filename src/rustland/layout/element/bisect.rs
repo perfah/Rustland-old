@@ -11,7 +11,7 @@ pub use wlc::{Geometry, Point, Size};
 
 pub const LOWER_SEGM_BOUND: i32 = 0;
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum Orientation{
     Horizontal,
     Vertical,
@@ -28,7 +28,7 @@ impl Orientation{
 
 impl Copy for Orientation {}
 
-#[derive(Clone, Hash)]
+#[derive(Serialize, Deserialize, Clone, Hash)]
 pub enum Side {
     Left,
     Right,
@@ -56,7 +56,7 @@ impl PartialEq for Side {
 }
 impl Eq for Side {}
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Bisect{
     children: HashMap<Side, LayoutElemID>,
     pub orientation: Orientation,

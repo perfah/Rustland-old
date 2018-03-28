@@ -11,9 +11,12 @@ use wmstate::WMState;
 use wlc::{View, WeakView, ResizeEdge};
 use gl::types::GLuint;
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Window {
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     weak_view: Option<WeakView>,
+
     desired_geometry: Geometry,
     inner_offset: Option<u32>,
     pub frame: Option<Frame>

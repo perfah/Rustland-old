@@ -4,7 +4,7 @@ use std::sync::MutexGuard;
 use std::cell::RefCell;
 use wmstate::WMState;
 
-use common::definitions::{LayoutElemID, ViewPID, ElementReference};
+use common::definitions::{LayoutElemID, ViewPID, ElementReference, TAG_PREFIX};
 use common::definitions::ElementReference::*;
 use common::job::Job;
 use wmstate::PENDING_JOBS;

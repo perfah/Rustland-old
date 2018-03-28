@@ -1,3 +1,5 @@
+#![macro_use]
+
 use std::fmt;
 use std::cell::{RefCell, RefMut};
 use std::ops::{Deref, DerefMut};
@@ -10,11 +12,18 @@ pub mod grid;
 use common::definitions::LayoutElemID;
 use layout::element::LayoutElementProfile::{Bisect, Padding, Window, Grid};
 use layout::property::{ElementPropertyProvider, PropertyBank};
+use sugars::Renderable;
+#[macro_use] use utils;
 
+#[derive(Serialize, Deserialize)]
 pub struct LayoutElement{
     pub parent_id: Option<LayoutElemID>,
     pub element_id: LayoutElemID,
+    
     pub profile: LayoutElementProfile,
+
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     pub properties: PropertyBank
 }
 
@@ -57,8 +66,21 @@ impl LayoutElement {
         }
     }   
 }
+impl fmt::Display for LayoutElementProfile {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", 
+            match self {
+                &LayoutElementProfile::Bisect(_) => "bisect",
+                &LayoutElementProfile::Grid(_) => "grid",
+                &LayoutElementProfile::Padding(_) => "padding",
+                &LayoutElementProfile::Window(_) => "window",
+                _ => "n/a"
+            }
+        )
+    }
+}
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum LayoutElementProfile {
     // Unallocated space in the layout
     None,
@@ -76,6 +98,9 @@ pub enum LayoutElementProfile {
     Window(window::Window)
 }
 
+//my_macro!();
+ //enum_derive_trait!(LayoutElementProfile, Renderable, draw);
+
 impl LayoutElementProfile {
     pub fn is_none(&self) -> bool{
         match *self {
@@ -83,20 +108,6 @@ impl LayoutElementProfile {
             _ => false 
         }
     } 
-}
-
-impl fmt::Display for LayoutElementProfile {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", 
-            match self {
-                &LayoutElementProfile::Bisect(_) => "bisect",
-                &LayoutElementProfile::Grid(_) => "grid",
-                &LayoutElementProfile::Padding(_) => "padding",
-                &LayoutElementProfile::Window(_) => "window",
-                _ => "n/a"
-            }
-        )
-    }
 }
 
 trait ElementContainer{

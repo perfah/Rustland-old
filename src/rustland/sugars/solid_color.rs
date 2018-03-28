@@ -24,15 +24,12 @@ impl SolidColor {
 impl Renderable for SolidColor {
     fn draw(&mut self, program: &GraphicsProgram, viewport: Geometry) {
         unsafe {           
-            gl::Disable(gl::CULL_FACE);
-
+            gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+            gl::Enable( gl::BLEND );
             gl::Viewport(viewport.origin.x, viewport.origin.y, viewport.size.w as i32, viewport.size.h as i32);
-            //gl::ClearColor(self.r, self.g, self.b, self.a);
-            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-            gl::ClearColor(1.0, 0.2, 0.5, 0.5);
-            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-            gl::ClearColor(1.0, 0.2, 0.5, 0.5);
-            
+            gl::ClearColor(self.r, self.g, self.b, self.a);
+            gl::Clear(gl::COLOR_BUFFER_BIT);    
+
             gl::Flush();
 
             match gl::GetError() {

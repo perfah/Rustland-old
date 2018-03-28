@@ -5,10 +5,13 @@ use std::io::Read;
 use std::thread::{spawn, sleep};
 use std::time;        
 use std::ops::DerefMut;
+use std::env::home_dir;
+use std::path::PathBuf;
 
 use common::definitions::{WM_FORWARD_EVENT_TO_CLIENT, WM_CATCH_EVENT};
 use common::job::{Job, JobType};
 use common::definitions::{FPS, ElementReference};
+use config::Config;
 use io::physical::InputDevice;
 use layout::element::{LayoutElement, LayoutElementProfile};
 use layout::element::window::Window;
@@ -17,9 +20,11 @@ use layout::LayoutTree;
 use utils::geometry::{PointExt, SizeExt, GeometryExt};
 use wmstate::{WMState, WM_STATE, PENDING_JOBS, FINALIZED_JOBS, ACTIVE_TRANSITIONS};
 use async::{schedule_wallpaper_init, schedule_job_routine, schedule_animator_routine, schedule_tcp_routine};
+use sugars::solid_color::SolidColor;
 
 use wlc::{Callback, Key, KeyState, Point, Size, Geometry, ButtonState, View, Output, Visibility, Modifier, Modifiers, Button, terminate};
 use wlc::render::{RenderOutput, RenderView};
+use wlc::TouchType;
 use egli;
 use gl;
 use thread_tryjoin::TryJoinHandle;
@@ -32,18 +37,35 @@ impl Callback for Compositor {
         gl::Viewport::load_with(|s| egli::egl::get_proc_address(s) as *const _);
 
         if let Ok(mut wm_state) = WM_STATE.write(){
-            wm_state.input_dev = Some(InputDevice::init());
-            let program = wm_state.init_graphics_program(); 
-            wm_state.render_background();
+            // Initialize config:
+            if let Some(valid_config) = Config::load_from_file(Config::file_path()){
+                wm_state.config = valid_config;
+            }
 
+            // Initialize layout tree:
+            wm_state.tree = wm_state.config.layout.construct_tree();
             LayoutTree::refresh(&mut wm_state);
 
-            // Temporary hardcoding of wallpaper file path (until compositor configuration is available):
-            use std::env::home_dir;
-            let mut wallpaper_path = home_dir().unwrap();
-            wallpaper_path.push("wallpaper.jpg");
+            // Initialize input device:
+            wm_state.input_dev = Some(InputDevice::init());
+            
+            // Initalize additional graphics:
+            let program = wm_state.init_graphics_program(); 
+            wm_state.render_background();
+            let grid_tag = wm_state.config.layout.grid_tag.clone();
+            for mut sub in wm_state.tree.lookup_element_by_tag("sub".to_string())  {
+                if let LayoutElementProfile::Padding(ref mut padding) = sub.profile {
+                    //padding.apply_frame(wm_state.graphics_program.as_ref().unwrap(), 1.0f32);
+                }
+            }
 
-            wm_state.next_wallpaper_image = Some(schedule_wallpaper_init(wallpaper_path));
+            if let Some(wallpaper_path) = wm_state.config.background.wallpaper_path.clone(){
+                wm_state.next_wallpaper_image = Some(schedule_wallpaper_init(PathBuf::from(wallpaper_path)));
+            }
+
+            if let Some(rgba) = wm_state.config.background.color_for_gl(){
+                wm_state.solid_color = Some(SolidColor::new(rgba.0, rgba.1, rgba.2, 1.0f32));
+            }
         }
 
         schedule_job_routine();              
@@ -136,6 +158,8 @@ impl Callback for Compositor {
 
         if state == KeyState::Pressed {
             if let Ok(mut wm_state) = WM_STATE.write() {
+                let meta_view_key = wm_state.config.keyboard.meta_view_key;
+
                 //Press F3 for tree view
                 if sym == Key::F3{
                     println!();
@@ -145,36 +169,42 @@ impl Callback for Compositor {
                 }
 
                 //Press F5 to force an update to the arrangement
-                if sym == Key::F5{
+                if sym == Key::F4{
                     if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
                         pending_jobs.push(Job::init_unconditional(JobType::LAYOUT_REFRESH));
                     } 
                     return WM_CATCH_EVENT;
                 }
-
-                if modifiers.mods == Modifier::Ctrl {
+                if wm_state.config.keyboard.mod_key_is_pressed(modifiers.mods) {
                     // Window manager catch modifier
-                    if let Some(&root_ident) = wm_state.tree.tags.address_element_by_tag("root".to_string()).first() {
-                        if sym == Key::Tab {
-                            if let Some(&jumper_ident) = wm_state.tree.tags.address_element_by_tag("workspace_selection".to_string()).first() {
+                    if let Some(&root_ident) = wm_state.tree.tags.address_element_by_tag(wm_state.config.layout.root_tag.clone()).first() {
+                        if sym == meta_view_key {
+                            if let Some(&jumper_ident) = wm_state.tree.tags.address_element_by_tag(wm_state.config.layout.jumper_tag.clone()).first() {
                                 wm_state.tree.animate_property(jumper_ident, "offset_x", 0f32, false, 250);
                                 wm_state.tree.animate_property(jumper_ident, "offset_y", 0f32, false, 250);
                             }
-                            wm_state.tree.animate_property(root_ident, "inner_scale", 0.33f32, false, 125);
+                            wm_state.tree.animate_property(root_ident, "inner_scale_x", 1f32 / wm_state.config.layout.grid_width() as f32, false, 125);
+                            wm_state.tree.animate_property(root_ident, "inner_scale_y", 1f32 / wm_state.config.layout.grid_height() as f32, false, 125);
                         }
                         else {
-
-                            wm_state.tree.animate_property(root_ident, "inner_scale", 1.0f32, false, 125);
+                            wm_state.tree.animate_property(root_ident, "inner_scale_x", 1.0f32, false, 125);
+                            wm_state.tree.animate_property(root_ident, "inner_scale_y", 1.0f32, false, 125);
                         }
                     }
 
                     let display_geometry = wm_state.tree.get_outer_geometry();
                     let mut new_workspace_offset = None;
                     if sym == Key::Left || sym == Key::Right || sym == Key::Up || sym == Key::Down {
-                        if let Some(mut element) = wm_state.tree.lookup_element(2) {
+
+                        let mut pre = None;
+                        let mut post = None;
+
+                        if let Some(mut element) = wm_state.tree.lookup_element_by_tag(wm_state.config.layout.grid_tag.clone()).first_mut() {
                             match element.profile{
-                                LayoutElementProfile::Grid(ref mut wrkspc) => {
-                                    wrkspc.switch_to_subspace_in_direction(
+                                LayoutElementProfile::Grid(ref mut grid) => {
+                                    pre = Some(grid.get_active_child_id());
+                                    
+                                    grid.switch_to_subspace_in_direction(
                                         match sym{
                                             Key::Left => Direction::LEFT,
                                             Key::Right => Direction::RIGHT,
@@ -183,14 +213,16 @@ impl Callback for Compositor {
                                             _ => panic!("The number of key check are more than the possible direction.")
                                         }
                                     );
-                                    
-                                    new_workspace_offset = Some(wrkspc.get_offset_geometry(display_geometry, Geometry::zero(), wrkspc.active_subspace() as u16, &mut 1.0f32));
+
+                                    post = Some(grid.get_active_child_id());
+                                    wm_state.tree.animate_property_explicitly(post.unwrap(), "frame_opacity", 0.0f32, 1.0f32, false, 500, 0);
+                                    new_workspace_offset = Some(grid.get_offset_geometry(display_geometry, Geometry::zero(), grid.active_subspace() as u16, &mut (1.0f32, 1.0f32)));
                                 }
                                 _ => { panic!("Expected element to be a workspace.") }
                             }
                         }
                         
-                        if let Some(&jumper_ident) = wm_state.tree.tags.address_element_by_tag("workspace_selection".to_string()).first() {
+                        if let Some(&jumper_ident) = wm_state.tree.tags.address_element_by_tag(wm_state.config.layout.jumper_tag.clone()).first() {
                             if let Some(geometry) = new_workspace_offset{
                                 wm_state.tree.animate_property(jumper_ident, "offset_x", -geometry.origin.x as f32, false, 250);
                                 wm_state.tree.animate_property(jumper_ident, "offset_y", -geometry.origin.y as f32, false, 250);
@@ -213,29 +245,23 @@ impl Callback for Compositor {
                             
                             return WM_CATCH_EVENT;
                         } 
-                        else if sym == Key::Tab {
-                            v.send_to_back();
-                            //get_topmost_view(v.output(), 0).unwrap().focus();
-                            return WM_CATCH_EVENT;
-                        }
                     }
 
                     if sym == Key::Esc {
                         terminate();
                         return WM_CATCH_EVENT;
                     }
-                    else if sym == Key::Space {
-                        let _ = Command::new("sh")
+                    else if let Some(matching_hotkey_executable) = wm_state.config.keyboard.matching_hotkey(modifiers.mods, sym) {
+                        Command::new("sh")
                             .arg("-c")
-                            .arg("/usr/bin/dmenu_run")
-                            .spawn()
-                            .unwrap_or_else(|e| {
-                                panic!("Can't spawn process!");
-                            });
+                            .arg(matching_hotkey_executable)
+                            .spawn();
 
                         return WM_CATCH_EVENT;
                     }
                 }
+
+ 
             }
         }
 

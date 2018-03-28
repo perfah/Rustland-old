@@ -1,6 +1,3 @@
-extern crate serde;
-extern crate serde_json;
-
 use std::sync::{RwLock, Mutex};
 use std::marker::Sync;
 use std::cell::{RefCell, RefMut};
@@ -10,9 +7,13 @@ use std::sync::atomic::AtomicBool;
 
 use common::definitions::FALLBACK_RESOLUTION;
 use common::job::Job;
+use config::Config;
 use io::physical::InputDevice;
 use layout::transition::Transition;
 use layout::*;
+use layout::element::LayoutElementProfile;
+use layout::element::padding::Padding;
+use layout::tag::TagRegister;
 use sugars::program::GraphicsProgram;
 use sugars::wallpaper::Wallpaper;
 use sugars::solid_color::SolidColor;
@@ -27,11 +28,12 @@ use gl::types::{GLint, GLuint};
 use thread_tryjoin::TryJoinHandle;
 
 pub struct WMState{
+    pub config: Config,
     pub tree: LayoutTree,
     pub input_dev: Option<InputDevice>,
     pub graphics_program: Option<GraphicsProgram>,
     wallpaper: Option<Wallpaper>,
-    solid_color: SolidColor,
+    pub solid_color: Option<SolidColor>,
     pub next_wallpaper_image: Option<JoinHandle<RgbaImage>>
 }
 
@@ -68,11 +70,21 @@ impl WMState {
 
     pub fn render_background(&mut self){
         if let Some(ref mut program) = self.graphics_program {
-            let geometry = self.tree.get_outer_geometry();
+            let mut scale = (1.0f32, 1.0f32);    
+            
+            let total_geom = self.tree.get_outer_geometry();
+            let geometry = match self.tree.lookup_element_by_tag(self.config.layout.jumper_tag.clone()).first().expect("No jumper!").profile{
+                LayoutElementProfile::Padding(ref root) => root.get_offset_geometry(self.tree.get_outer_geometry(), &mut scale),
+                _ => total_geom
+            };
+            
 
-            match self.wallpaper {
-                Some(ref mut wallpaper) => program.run_job(wallpaper, geometry),
-                None => program.run_job(&mut self.solid_color, geometry)
+            if self.solid_color.is_some(){    
+                program.run_job(self.solid_color.as_mut().unwrap(), total_geom);
+            }
+
+            if let Some(ref mut wallpaper) = self.wallpaper {
+                program.run_job(wallpaper, total_geom);
             }
         }
     }
@@ -85,11 +97,12 @@ unsafe impl Sync for WMState {}
 lazy_static! {
     pub static ref WM_STATE: RwLock<WMState> = RwLock::new(
         WMState{
-            tree: LayoutTree::init(Geometry::new(Point::origin(), FALLBACK_RESOLUTION), 3, 3),
+            config: Config::default(),
+            tree: LayoutTree::init(Geometry::new(Point::origin(), FALLBACK_RESOLUTION), 1, 1),
             input_dev: None,
             graphics_program: None,
             wallpaper: None,
-            solid_color: SolidColor::new(1.0, 1.0, 1.0, 0.1),
+            solid_color: None,
             next_wallpaper_image: None
         }
     );

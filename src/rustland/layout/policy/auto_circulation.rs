@@ -145,7 +145,6 @@ impl LayoutPolicy for AutoCirculation{
                     if property != "" { tree.animate_element_property(&mut grand_parent, property, new_value, false, time_frame); }
                 }
                 
-                println!("BISECT REMOVAL");
                 tree.reserve_element_identity(parent_ident, LayoutElementProfile::None);
             }
             else{

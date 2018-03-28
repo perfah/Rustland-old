@@ -18,7 +18,7 @@ static FULLSCREEN_VERTICES: [GLfloat; 12] = [
         1f32,    1f32,  
 ];
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Frame {
     vao: GLuint,
     vbo: GLuint,
@@ -105,6 +105,13 @@ impl Renderable for Frame {
             gl::Viewport(viewport.origin.x, viewport.origin.y, viewport.size.w as i32, viewport.size.h as i32);
             gl::ClearColor(1.0, 1.0, 1.0, self.opacity);
             gl::Clear(gl::COLOR_BUFFER_BIT);
+
+            gl::BindVertexArray(self.vao);
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
+
+            gl::DrawArrays(gl::TRIANGLES, 0, 12);
+            gl::BindVertexArray(0);
+            gl::Flush();
 
             match gl::GetError() {
                 gl::NO_ERROR => {},

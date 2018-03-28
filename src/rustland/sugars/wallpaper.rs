@@ -131,7 +131,7 @@ impl Renderable for Wallpaper {
             gl::Disable(gl::CULL_FACE);
 
             gl::Viewport(viewport.origin.x, viewport.origin.y, viewport.size.w as i32, viewport.size.h as i32);
-            gl::ClearColor(1.0, 1.0, 1.0, 1.0)      ;
+            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
             gl::BindVertexArray(self.vao);

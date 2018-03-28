@@ -55,43 +55,24 @@ pub struct LayoutTree{
 
 impl LayoutTree {
     pub fn init(outer_geometry: Geometry, grid_w: usize, grid_h: usize) -> Self{
-        let mut tree = LayoutTree{
+        LayoutTree{
             active_id: PARENT_ELEMENT   ,  
             focused_id: PARENT_ELEMENT,
             elements: Vec::new(),
             tags: TagRegister::init(),
             outer_geometry: outer_geometry,
             layout_policy: box AutoCirculation::init(grid_w * grid_h)
-        };
-
-        tree.tags.tag_element_on_condition("root", |elem_id, _| elem_id == PARENT_ELEMENT);
-        tree.tags.tag_element_on_condition("focused", |elem_id, wm_state| elem_id == wm_state.tree.focused_id);
-
-        // Root element
-        let (root_ident, root_profile) = Padding::init(tree.spawn_dummy_element(None), &mut tree, 100, None);
-        
-        // Jumper element
-        let (wrkspc_sel_ident, wrkspc_sel_profile) = Padding::init(root_profile.child_elem_id, &mut tree, 0, Some(Point::origin()));
-        tree.tags.tag_element("workspace_selection", wrkspc_sel_ident);
-
-        // Workspaces
-        let (grid_ident, grid_profile) = Grid::init(wrkspc_sel_profile.child_elem_id, &mut tree, grid_w, grid_h);
-
-        tree.reserve_element_identity(root_ident, LayoutElementProfile::Padding(root_profile));
-        tree.reserve_element_identity(wrkspc_sel_ident, LayoutElementProfile::Padding(wrkspc_sel_profile));
-        tree.reserve_element_identity(grid_ident, LayoutElementProfile::Grid(grid_profile));
-
-        tree.animate_property(root_ident, "gap_size", 0f32, false, 250);
-
-        tree
-
+        }
     }
+
     pub fn refresh(wm_state: &mut WMState){
         TagRegister::refresh_tag_statuses(wm_state);
 
+        let &mut WMState { ref tree, ref graphics_program, .. } = wm_state;
         let mut stacked_padding: Option<u32> = None; 
-        let mut stacked_scale: f32 = 1.0f32;
-        arrangement::arrange(&wm_state.tree, PARENT_ELEMENT, wm_state.tree.outer_geometry, &mut stacked_padding, &mut stacked_scale);
+        let mut stacked_scale = (1.0f32, 1.0f32);
+        arrangement::arrange(tree, PARENT_ELEMENT, wm_state.tree.outer_geometry, &mut stacked_padding, &mut stacked_scale, graphics_program.as_ref());
+        
     }
 
     pub fn lookup_element(&self, elem_id: LayoutElemID) -> Option<RefMut<LayoutElement>>{   

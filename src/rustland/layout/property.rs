@@ -1,10 +1,11 @@
-#![macro_use]
+    #![macro_use]
 
 use std::collections::HashMap;
 use std::iter::FromIterator;
 use num_traits::cast::{NumCast,ToPrimitive};
 use num::traits::cast;
 use std::cell::RefMut;
+use std::default::Default;
 
 use common::definitions::{DefaultNumericType, LayoutElemID};
 use layout::LayoutTree;
@@ -44,6 +45,14 @@ pub trait ElementPropertyProvider{
 
 pub struct PropertyBank{
     properties: HashMap<&'static str, Box<handle_function>>
+}
+
+impl Default for PropertyBank {
+    fn default() -> PropertyBank {
+        PropertyBank {
+            properties: HashMap::new()
+        }
+    }
 }
 
 impl PropertyBank{

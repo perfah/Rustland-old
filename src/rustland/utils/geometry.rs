@@ -45,7 +45,7 @@ pub trait GeometryExt {
     fn zero() -> Geometry;
     fn overlaps_geometry(&self, other_geom: Geometry) -> bool;
     fn contains_point(&self, point: Point) -> bool;
-    fn scaled(&mut self, factor: f32) -> Geometry;
+    fn scaled(&mut self, x_factor: f32, y_factor: f32) -> Geometry;
 }
 
 impl GeometryExt for Geometry {
@@ -74,15 +74,15 @@ impl GeometryExt for Geometry {
         self.origin.y <= point.y && point.y <= self.origin.y + (self.size.h as i32)
     }
 
-    fn scaled(&mut self, factor: f32) -> Geometry{
+    fn scaled(&mut self, x_factor: f32, y_factor: f32) -> Geometry{
         Geometry {
             origin: Point {
-                x: (self.origin.x as f32 * factor) as i32,
-                y: (self.origin.y as f32 * factor) as i32
+                x: (self.origin.x as f32 * x_factor) as i32,
+                y: (self.origin.y as f32 * y_factor) as i32
             },
             size: Size {
-                w: (self.size.w as f32 * factor) as u32,
-                h: (self.size.h as f32 * factor) as u32
+                w: (self.size.w as f32 * x_factor) as u32,
+                h: (self.size.h as f32 * y_factor) as u32
             }
         } 
     }

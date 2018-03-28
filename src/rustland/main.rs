@@ -15,9 +15,12 @@ pub extern crate egli;
 pub extern crate image;
 pub extern crate gl;
 pub extern crate thread_tryjoin;
+pub extern crate serde;
+pub extern crate toml;
 
 extern crate common;
 
+mod config;
 mod layout;
 mod io;
 mod utils;

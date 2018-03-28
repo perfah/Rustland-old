@@ -9,6 +9,9 @@ use layout::element::bisect::Side;
 use layout::arrangement;
 use wmstate::*;
 use utils::geometry::GeometryExt;
+use sugars::Renderable;
+use sugars::program::GraphicsProgram;
+
 
 use wlc::{Size, Geometry, Visibility};
 
@@ -168,29 +171,35 @@ pub fn find_first_unoccupied(tree: &LayoutTree, outer_element_id: LayoutElemID) 
     return None;
 }
 
-pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry: Geometry, stacked_padding: &mut Option<u32>, stacked_scale: &mut f32){
+pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry: Geometry, stacked_padding: &mut Option<u32>, stacked_scale: &mut (f32, f32), program: Option<&GraphicsProgram>) {
     if let Some(mut outer_element) = tree.lookup_element(outer_element_id){
         match outer_element.profile{
             LayoutElementProfile::Bisect(ref bisect) => {               
                 for (i, child_id) in bisect.children_iter().enumerate() {   
                     // Recursion
-                    arrange(tree, *child_id, bisect.get_offset_geometry(outer_geometry, stacked_padding, i as i32), stacked_padding, stacked_scale);
+                    arrange(tree, *child_id, bisect.get_offset_geometry(outer_geometry, stacked_padding, i as i32), stacked_padding, stacked_scale, program);
                 }
             },
             LayoutElementProfile::Grid(ref wrkspc) => { 
                 for (i, child_id) in wrkspc.get_all_children().iter().enumerate() {   
                     // Recursion
-                    arrange(tree, *child_id, wrkspc.get_offset_geometry(tree.get_outer_geometry(), outer_geometry, i as u16, stacked_scale), stacked_padding, stacked_scale);
+                    arrange(tree, *child_id, wrkspc.get_offset_geometry(tree.get_outer_geometry(), outer_geometry, i as u16, stacked_scale), stacked_padding, stacked_scale, program);
                 }
             },
             LayoutElementProfile::Padding(ref mut padding) => {
-                *stacked_scale *= padding.inner_scale;
+                (*stacked_scale).0 *= padding.inner_scale_x;
+                (*stacked_scale).1 *= padding.inner_scale_y;
                 *stacked_padding = Some(padding.gap_size);
                 
+                if let Some(prog) = program{
+                    padding.draw(prog, outer_geometry);
+                }
+
                 // Recursion
-                arrange(tree, padding.child_elem_id, padding.get_offset_geometry(outer_geometry, stacked_scale), stacked_padding, stacked_scale);
-                
-                *stacked_scale /= if padding.inner_scale != 0f32 { padding.inner_scale } else { panic!("Scaling can't be 0.") };
+                arrange(tree, padding.child_elem_id, padding.get_offset_geometry(outer_geometry, stacked_scale), stacked_padding, stacked_scale, program);
+
+                (*stacked_scale).0 /= if padding.inner_scale_x != 0f32 { padding.inner_scale_x } else { panic!("X-scaling can't be 0.") };
+                (*stacked_scale).0 /= if padding.inner_scale_y != 0f32 { padding.inner_scale_y } else { panic!("Y-scaling can't be 0.") };
                 *stacked_padding = None;
             },
             LayoutElementProfile::Window(ref mut window) => {
