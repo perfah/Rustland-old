@@ -17,7 +17,7 @@ static KEY_DIVISOR: char = '-';
 pub struct KeyboardConfig {
     pub mod_key: String,
     pub meta_view_key: Key,
-    pub hotkeys: HashMap<String, String>
+    pub hotkeys: HashMap<String, String>,
 }
 
 impl Default for KeyboardConfig {
@@ -26,8 +26,8 @@ impl Default for KeyboardConfig {
             mod_key: "Logo".to_string(),
             meta_view_key: Key::Tab,
             hotkeys: [
-                (format!("Space{}Ctrl", KEY_DIVISOR), "/usr/bin/dmenu_run".to_string()),
-                ("T".to_string(), "/usr/bin/terminator".to_string()),
+                (format!("Ctrl{}Space", KEY_DIVISOR), "/usr/bin/dmenu_run".to_string()),
+                (format!("Ctrl{}T", KEY_DIVISOR), "/usr/bin/terminator".to_string()),
             ].iter().cloned().collect()
         }
     }
@@ -40,10 +40,7 @@ impl KeyboardConfig {
 
     pub fn matching_hotkey(&self, mods: Flags, key: Key) -> Option<String>{        
         for (str_seq, bin) in &self.hotkeys {
-           
-            let sequence = KeySequence::new(str_seq.clone());
-
-            if sequence.matches(mods, Some(key)) {    
+            if KeySequence::new(str_seq.clone()).matches(mods, Some(key)) {    
                 return Some(bin.clone());
             }
         }
