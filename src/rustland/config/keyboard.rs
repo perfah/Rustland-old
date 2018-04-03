@@ -13,6 +13,48 @@ use toml::de::Deserializer;
 
 static KEY_DIVISOR: char = '-';
 
+#[derive(Serialize, Deserialize)]
+pub struct KeyboardConfig {
+    pub mod_key: String,
+    pub meta_view_key: Key,
+    pub hotkeys: HashMap<String, String>
+}
+
+impl Default for KeyboardConfig {
+    fn default() -> Self {
+        KeyboardConfig {
+            mod_key: "Logo".to_string(),
+            meta_view_key: Key::Tab,
+            hotkeys: [
+                (format!("Space{}Ctrl", KEY_DIVISOR), "/usr/bin/dmenu_run".to_string()),
+                ("T".to_string(), "/usr/bin/terminator".to_string()),
+            ].iter().cloned().collect()
+        }
+    }
+}
+
+impl KeyboardConfig {
+    pub fn mod_key_is_pressed(&self, mods: Flags) -> bool {
+        KeySequence::new(self.mod_key.clone()).matches(mods, None)
+    }
+
+    pub fn matching_hotkey(&self, mods: Flags, key: Key) -> Option<String>{        
+        for (str_seq, bin) in &self.hotkeys {
+           
+            let sequence = KeySequence::new(str_seq.clone());
+
+            if sequence.matches(mods, Some(key)) {    
+                return Some(bin.clone());
+            }
+        }
+
+        return None;
+    }
+}
+
+// Data structure for interpreting keyboard input sequences (strings)
+// ==================================================================
+
 #[derive(Serialize, Deserialize, PartialEq)]
 enum KeySequence {
     Mod(Modifier::Flags),
@@ -24,7 +66,10 @@ enum KeySequence {
 
 impl KeySequence {
     pub fn new(src: String) -> KeySequence {
-        if !src.contains(KEY_DIVISOR) {
+        if src.is_empty() {
+            KeySequence::Unrecognized
+        }
+        else if !src.contains(KEY_DIVISOR) {
             #[derive(Serialize, Deserialize)]
             struct KeyHolder { value: Key }
             
@@ -63,75 +108,21 @@ impl KeySequence {
     }
 
     pub fn new_combo() -> KeySequence {
-        KeySequence::Combo(
+        KeySequence::Combo (
             box KeySequence::End,
             box KeySequence::End
         )
     }
 
-    pub fn matches(&self, mods: Flags, key: Key) -> bool {
+    pub fn matches(&self, mods: Flags, key: Option<Key>) -> bool {
         match self {
             &KeySequence::Mod(m) => mods.contains(m),
-            &KeySequence::RegularKey(k) => key == k,
+            &KeySequence::RegularKey(k1) => if let Some(k2) = key { k1 == k2 } else { false },
             &KeySequence::Combo(ref former, ref latter) => 
                 former.matches(mods, key) && 
                 latter.matches(mods, key),
             &KeySequence::End => true,
             &KeySequence::Unrecognized => false
         }
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct KeyboardConfig {
-    pub mod_key: String,
-    pub meta_view_key: Key,
-    pub hotkeys: HashMap<String, String>
-}
-
-impl Default for KeyboardConfig {
-    fn default() -> Self {
-        KeyboardConfig {
-            mod_key: "Logo".to_string(),
-            meta_view_key: Key::Tab,
-            hotkeys: [
-                (format!("Space{}Ctrl", KEY_DIVISOR), "/usr/bin/dmenu_run".to_string()),
-                ("T".to_string(), "/usr/bin/terminator".to_string()),
-            ].iter().cloned().collect()
-        }
-    }
-}
-
-impl KeyboardConfig {
-    pub fn modifier(&self) -> Modifier::Flags {
-        match self.mod_key.as_ref() {
-            "Alt" => Modifier::Alt,
-            "Caps" => Modifier::Caps,
-            "Ctrl" => Modifier::Ctrl,
-            "Logo" => Modifier::Logo,
-            "Mod2" => Modifier::Mod2,
-            "Mod3" => Modifier::Mod3,
-            "Mod5" => Modifier::Mod5,
-            "Shift" => Modifier::Shift,
-            _ => Modifier::Flags::empty()
-        }
-    }
-
-
-    pub fn mod_key_is_pressed(&self, mods: Flags) -> bool {
-        mods.contains(self.modifier())
-    }
-
-    pub fn matching_hotkey(&self, mods: Flags, key: Key) -> Option<String>{        
-        for (str_seq, bin) in &self.hotkeys {
-           
-            let sequence = KeySequence::new(str_seq.clone());
-
-            if sequence.matches(mods, key) {    
-                return Some(bin.clone());
-            }
-        }
-
-        return None;
     }
 }
