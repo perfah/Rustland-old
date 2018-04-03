@@ -11,8 +11,8 @@ Inspired feature-wise by [dynamic window managers](https://en.wikipedia.org/wiki
   
   Rustland is **still in the alpha stages so it probably won't fit your needs just yet**. 
 
-Current state 
--------------
+What is currently in the scope of this project?
+-----------------------------------------------
 
  - [x] On-demand like creation of window layouts 
  - [x] Automatic circular window tiling
@@ -20,18 +20,18 @@ Current state
  - [x] Command for showing an overview of the layout (the different workspaces) 
  - [x] Tag system for referencing items in the layout, e.g. both '@focused' and '@firefox' references Firefox should it be the focused application in your layout
  - [x] Some network transparency (via TCP) - allows for potential interaction with the compositor from various applications/platsforms. 
- - [ ] Configution and customization
- - [ ] Window decorations: borders, etc..
- - [ ] "Snapshots" for saving and loading layouts
+ - [x] [Basic configution and customization](https://github.com/perfah/Rustland/wiki/Configuration)
  - [ ] Layout interaction: resizing windows with mouse, keyboard shortcuts..
- - [ ] Floating windows
+ - [ ] Touchscreen support
+ - [ ] "Snapshots" for saving and loading layouts (maybe)
+ - [ ] Floating windows (maybe)
+ - [ ] Dbus integration (maybe) 
 
-Interesting directions this project could take
-----------------------------------------------
+What is not in the scope of this project?
+-----------------------------------------
 
-* Dbus integration (for plugins perhaps) 
-* More advanced network transparancy
-* Lockscreen
+* A panel/bar is not in the scope of this project since one can be implemented as a third party application. Implementing the APIs necessary for that to work will be the priority instead.
+* Screen capturing is at least not a primary concern
 
 rlctl, a compositor interaction utility
 ---------------------------------------
@@ -45,4 +45,4 @@ Example syntax: ``rlctl tree``, ``rlctl runapp /usr/bin/thunar``, ``rlctl @thuna
 Contribution
 ------------
 
-Credits for the backbone of this project goes to the [WLC (Wayland Compositor Project)](https://github.com/Cloudef/wlc) and the [RustWLC Rust bindings project](https://github.com/Immington-Industries/rust-wlc).
+Credits for the backbone of this project goes to the [WLC (Wayland Compositor Project)](https://github.com/Cloudef/wlc) and the [wlc.rs bindings project](https://github.com/Drakulix/wlc.rs).
