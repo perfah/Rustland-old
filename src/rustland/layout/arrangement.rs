@@ -180,10 +180,18 @@ pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry
                     arrange(tree, *child_id, bisect.get_offset_geometry(outer_geometry, stacked_padding, i as i32), stacked_padding, stacked_scale, program);
                 }
             },
-            LayoutElementProfile::Grid(ref wrkspc) => { 
-                for (i, child_id) in wrkspc.get_all_children().iter().enumerate() {   
-                    // Recursion
-                    arrange(tree, *child_id, wrkspc.get_offset_geometry(tree.get_outer_geometry(), outer_geometry, i as u16, stacked_scale), stacked_padding, stacked_scale, program);
+            LayoutElementProfile::Grid(ref mut grid) => { 
+                if grid.selective_subspace_update_is_suitable() {
+                    while let Some( (i, child_id) ) = grid.most_urgent_subspace_update() {   
+                        // Recursion
+                        arrange(tree, child_id, grid.get_offset_geometry(tree.get_outer_geometry(), outer_geometry, i as u16, stacked_scale), stacked_padding, stacked_scale, program);
+                    }
+                }
+                else {
+                    for (i, child_id) in grid.children_iter().enumerate() {   
+                        // Recursion
+                        arrange(tree, *child_id, grid.get_offset_geometry(tree.get_outer_geometry(), outer_geometry, i as u16, stacked_scale), stacked_padding, stacked_scale, program);
+                    }
                 }
             },
             LayoutElementProfile::Padding(ref mut padding) => {
