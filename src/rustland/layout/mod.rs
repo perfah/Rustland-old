@@ -205,7 +205,7 @@ impl LayoutTree {
         let prev_value = element.get_property(transitioning_property)
             .expect("animate_property_after_delay: Profile does not provide the property.");
         
-        if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.lock(){    
+        if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.try_lock(){    
             active_transitions.push(Transition::new(element.element_id, transitioning_property, prev_value, new_value, relative_transition, time_frame_ms, 0));
         }
     }
@@ -213,7 +213,7 @@ impl LayoutTree {
     pub fn animate_property_after_delay(&self, element_id: LayoutElemID, transitioning_property: &'static str, new_value: DefaultNumericType, relative_transition: bool, time_frame_ms: u64, delay_ms: u64){
         assert!(time_frame_ms != 0u64, "Time frame can't be zero!");
         
-        if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.lock(){   
+        if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.try_lock(){   
             let mut elem = self.lookup_element(element_id)
                 .expect("animate_property_after_delay: Either element identy does exist or it is already borrowed! Maybe use the explicit call instead?");
                 
@@ -233,7 +233,7 @@ impl LayoutTree {
     }
 
     pub fn animate_property_explicitly(&self, element_id: LayoutElemID, transitioning_property: &'static str, prev_value: DefaultNumericType, new_value: DefaultNumericType, relative_transition: bool, time_frame_ms: u64, delay_ms: u64){
-        if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.lock(){    
+        if let Ok(ref mut active_transitions) = ACTIVE_TRANSITIONS.try_lock(){    
             active_transitions.push(Transition::new(element_id, transitioning_property, prev_value, new_value, relative_transition, time_frame_ms, delay_ms));
         }
     }

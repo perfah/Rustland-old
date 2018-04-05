@@ -29,7 +29,7 @@ pub fn handle_client(mut stream: TcpStream) {
         reader.read_until(SOCKET_DETERMINANT, &mut input_buffer);
         if input_buffer.pop() == None { break; }
 
-        if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
+        if let Ok(mut pending_jobs) = PENDING_JOBS.try_lock(){
             match str::from_utf8(input_buffer.as_slice()){
                 Ok(v) => {
                     if let Ok(job) = serde_json::from_str(v){

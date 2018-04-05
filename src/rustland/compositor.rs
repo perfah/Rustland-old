@@ -125,7 +125,7 @@ impl Callback for Compositor {
                         wm_state.tree.tags.tag_element(tag.as_ref(), window_elem_id);
                     }
 
-                    if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
+                    if let Ok(mut pending_jobs) = PENDING_JOBS.try_lock(){
                         pending_jobs.push(Job::init_unconditional(JobType::LAYOUT_REFRESH));
                     } 
                 }
@@ -147,7 +147,7 @@ impl Callback for Compositor {
 
     fn view_focus(&mut self, view: &View, focused: bool) {
         if focused && view.view_type().is_empty(){
-            if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
+            if let Ok(mut pending_jobs) = PENDING_JOBS.try_lock(){
                 pending_jobs.push(Job::init(JobType::FOCUS, Some(ElementReference::ViewPID(view.pid())), Vec::new()));
             }  
         }
@@ -173,7 +173,7 @@ impl Callback for Compositor {
 
                 //Press F5 to force an update to the arrangement
                 if sym == Key::F4{
-                    if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
+                    if let Ok(mut pending_jobs) = PENDING_JOBS.try_lock(){
                         pending_jobs.push(Job::init_unconditional(JobType::LAYOUT_REFRESH));
                     } 
                     return WM_CATCH_EVENT;
@@ -236,7 +236,7 @@ impl Callback for Compositor {
                                 wm_state.tree.animate_property_explicitly(jumper_ident, "gap_size", zoom_magnitude, 0f32 as f32, false, 125, 126);
                             }
                         }
-                        if let Ok(mut pending_jobs) = PENDING_JOBS.lock(){
+                        if let Ok(mut pending_jobs) = PENDING_JOBS.try_lock(){
                             pending_jobs.push(Job::init_unconditional(JobType::LAYOUT_REFRESH));
                         } 
 
@@ -252,20 +252,19 @@ impl Callback for Compositor {
                     }
 
                     if sym == Key::Esc {
-                        terminate();
-                        return WM_CATCH_EVENT;
-                    }
-                    else if let Some(matching_hotkey_executable) = wm_state.config.keyboard.matching_hotkey(modifiers.mods, sym) {
-                        Command::new("sh")
-                            .arg("-c")
-                            .arg(matching_hotkey_executable)
-                            .spawn();
-
+                        terminate();  
                         return WM_CATCH_EVENT;
                     }
                 }
 
- 
+                if let Some(matching_hotkey_executable) = wm_state.config.keyboard.matching_hotkey(modifiers.mods, sym) {
+                    Command::new("sh")
+                        .arg("-c")
+                        .arg(matching_hotkey_executable)
+                        .spawn();
+
+                    return WM_CATCH_EVENT;
+                }
             }
         }
 
