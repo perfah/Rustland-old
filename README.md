@@ -9,7 +9,7 @@ A [Wayland](https://wayland.freedesktop.org/) compositor for window management w
 
  This project is not an attempt to clone anything you have seen before but you may recognize some features such as automatic window tiling and multiple workspaces from other projects. The intention is to create a new future-proof window manager with some of the powerful features of the past.
   
- Although Rustland is still under development you can try it today by [building it yourself](https://github.com/perfah/Rustland/wiki#building).
+ Although Rustland is still under development you can try it today by [building it yourself](https://github.com/perfah/Rustland/wiki/Get-started#building).
 
 What is currently in the scope of this project?
 -----------------------------------------------
