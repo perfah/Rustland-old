@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::cmp::{Eq, max};
-use num::{cast, abs};
+use num::{cast, abs, clamp};
 
 use layout::*;
 use common::definitions::LayoutElemID;
@@ -171,6 +171,6 @@ impl Bisect{
 
 impl ElementPropertyProvider for Bisect{
     fn register_properties(&self, property_bank: &mut PropertyBank){    
-        property_bank.address_property("ratio", make_property_handle!(Bisect, f32, ratio));
+        property_bank.address_property("ratio", make_property_handle!(Bisect, f32, ratio, 0.05f32, 0.95f32));
     }
 }

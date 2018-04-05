@@ -1,7 +1,7 @@
 use std::u16;
 use num::clamp;
 
-use common::definitions::LayoutElemID;
+use common::definitions::{LayoutElemID, FPS};
 use layout::LayoutTree;
 use layout::element::padding::Padding;
 use layout::element::LayoutElementProfile;
@@ -51,15 +51,11 @@ impl Grid{
     }
 
     pub fn set_active_subspace(&mut self, new_subspace: i16){
-        self.urgent_subspace_updates.push(self.active_subspace);
-
         self.active_subspace = clamp(
             new_subspace as usize, 
             0usize, 
             (self.subspace_element_ids.len() - 1) as usize
-        );
-
-        self.urgent_subspace_updates.push(self.active_subspace);
+        ); 
     }
 
     pub fn switch_to_subspace_in_direction(&mut self, direction: Direction){
@@ -95,13 +91,4 @@ impl Grid{
             size: outer_geometry.size
     }
 }
-
-
-    pub fn most_urgent_subspace_update(&mut self) -> Option<(usize, LayoutElemID)> {
-        self.urgent_subspace_updates.pop().map_or(None, |pos| Some( (pos, *self.subspace_element_ids.get(pos).unwrap()) )  )
-    }
-
-    pub fn selective_subspace_update_is_suitable(&self) -> bool {
-        self.urgent_subspace_updates.len() > 0
-    }
 }

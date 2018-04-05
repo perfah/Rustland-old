@@ -72,7 +72,12 @@ impl LayoutTree {
         let mut stacked_padding: Option<u32> = None; 
         let mut stacked_scale = (1.0f32, 1.0f32);
         arrangement::arrange(tree, PARENT_ELEMENT, wm_state.tree.outer_geometry, &mut stacked_padding, &mut stacked_scale, graphics_program.as_ref());
-        
+    }
+
+    pub fn geometry_of(&self, element_ident: LayoutElemID) -> Option<Geometry> {
+        let mut stacked_padding: Option<u32> = None; 
+        let mut stacked_scale = (1.0f32, 1.0f32);
+        arrangement::geometry_of(self, PARENT_ELEMENT, element_ident, self.outer_geometry, &mut stacked_padding, &mut stacked_scale)
     }
 
     pub fn lookup_element(&self, elem_id: LayoutElemID) -> Option<RefMut<LayoutElement>>{   

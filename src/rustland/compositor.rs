@@ -16,7 +16,10 @@ use io::physical::InputDevice;
 use layout::element::{LayoutElement, LayoutElementProfile};
 use layout::element::window::Window;
 use layout::element::grid::Direction;
+use layout::element::bisect::Orientation;
 use layout::LayoutTree;
+use layout::arrangement::tree;
+
 use utils::geometry::{PointExt, SizeExt, GeometryExt};
 use wmstate::{WMState, WM_STATE, PENDING_JOBS, FINALIZED_JOBS, ACTIVE_TRANSITIONS};
 use async::{schedule_wallpaper_init, schedule_job_routine, schedule_animator_routine, schedule_tcp_routine};
@@ -25,6 +28,7 @@ use sugars::solid_color::SolidColor;
 use wlc::{Callback, Key, KeyState, Point, Size, Geometry, ButtonState, View, Output, Visibility, Modifier, Modifiers, Button, terminate};
 use wlc::render::{RenderOutput, RenderView};
 use wlc::TouchType;
+use wlc::ResizeEdge::Flags;
 use egli;
 use gl;
 use thread_tryjoin::TryJoinHandle;
@@ -150,7 +154,6 @@ impl Callback for Compositor {
     }
 
     //fn view_request_move(&mut self, view: &View, origin: Point) {}
-    //fn view_request_resize(&mut self, view: &View, edges: ResizeEdge::Flags, origin: Point) {}
     //fn view_request_geometry(&mut self, _view: &View, _geometry: Geometry) {}
 
     fn keyboard_key(&mut self, view: Option<&View>, _time: u32, modifiers: Modifiers, sym: Key, state: KeyState) -> bool {
@@ -198,6 +201,7 @@ impl Callback for Compositor {
 
                         let mut pre = None;
                         let mut post = None;
+                        let animation_time = 500;
 
                         if let Some(mut element) = wm_state.tree.lookup_element_by_tag(wm_state.config.layout.grid_tag.clone()).first_mut() {
                             match element.profile{
@@ -215,7 +219,7 @@ impl Callback for Compositor {
                                     );
 
                                     post = Some(grid.get_active_child_id());
-                                    wm_state.tree.animate_property_explicitly(post.unwrap(), "frame_opacity", 0.0f32, 1.0f32, false, 500, 0);
+                                    wm_state.tree.animate_property_explicitly(post.unwrap(), "frame_opacity", 0.0f32, 1.0f32, false, animation_time, 0);
                                     new_workspace_offset = Some(grid.get_offset_geometry(display_geometry, Geometry::zero(), grid.active_subspace() as u16, &mut (1.0f32, 1.0f32)));
                                 }
                                 _ => { panic!("Expected element to be a workspace.") }
@@ -289,6 +293,9 @@ impl Callback for Compositor {
                         }
                     }
                 }
+                else {
+                    input_dev.resize = None;
+                } 
             }
         }
 
@@ -297,24 +304,68 @@ impl Callback for Compositor {
 
     fn pointer_motion(&mut self, _view: Option<&View>, _time: u32, point: Point) -> bool {
         if let Ok(mut wm_state) = WM_STATE.write() {
+            let &mut WMState {ref tree, ref mut input_dev, ..} = wm_state.deref_mut();
+
             let (mut dx, mut dy) = (0, 0);
             let mut active_right_click = false;
-            if let Some(ref mut input_dev) = wm_state.input_dev{
-                dx = point.x - input_dev.mouse_location.x;
-                dy = point.y - input_dev.mouse_location.y;
+            if let &mut Some(ref mut dev) = input_dev{
+                dx = point.x - dev.mouse_location.x;
+                dy = point.y - dev.mouse_location.y;
 
-                input_dev.mouse_travel(
+                dev.mouse_travel(
                     Point{
                         x: dx,
                         y: dy
                     }
                 );
 
-                active_right_click = input_dev.right_click == ButtonState::Pressed;
+                if let Some( (element_ident, orientation) ) = dev.resize {
+                    // Handle window resizing
+                    let (x, y, w, h) = {
+                        let parent = tree.parent_of(element_ident);
+                        let parent_geometry = tree.geometry_of(parent).unwrap();
+
+                        (
+                            parent_geometry.origin.x as f32, 
+                            parent_geometry.origin.y as f32,
+                            parent_geometry.size.w as f32, 
+                            parent_geometry.size.h as f32
+                        )
+                    };
+
+                    tree.animate_property (
+                        element_ident, 
+                        "ratio", 
+                        match orientation { 
+                            Orientation::Horizontal => (point.x as f32 - x) / w, 
+                            Orientation::Vertical => (point.y as f32 - y) / h
+                        },
+                        false, 
+                        1
+                    );
+                }
+
+                active_right_click = dev.right_click == ButtonState::Pressed;
             }
         }
 
         // Note: Forward is REQUIRED for input to be registered by clients
         WM_FORWARD_EVENT_TO_CLIENT
+    }
+
+    fn view_request_resize(&mut self, view: &View, edges: Flags, origin: Point) { 
+        if let Ok(mut wm_state) = WM_STATE.write() {
+            let &mut WMState {ref tree, ref mut input_dev, ..} = wm_state.deref_mut();
+            
+            if let Some(elem_ident) = tree.lookup_element_from_view(view) {
+                let parent_id = tree.parent_of(elem_ident);
+
+                input_dev.as_mut().unwrap().resize = match tree.lookup_element(parent_id).unwrap().profile {
+                    LayoutElementProfile::Bisect(ref bisect) => Some( (parent_id, bisect.orientation) ),
+                    _ => None
+                };
+            }
+            
+        }
     }
 }

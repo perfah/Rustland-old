@@ -1,5 +1,6 @@
 use std::cell::RefMut;
 use std::cmp::max;
+use num::clamp;
 
 use common::definitions::{DefaultNumericType, LayoutElemID};
 use layout::LayoutTree;

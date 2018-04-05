@@ -180,18 +180,12 @@ pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry
                     arrange(tree, *child_id, bisect.get_offset_geometry(outer_geometry, stacked_padding, i as i32), stacked_padding, stacked_scale, program);
                 }
             },
-            LayoutElementProfile::Grid(ref mut grid) => { 
-                if grid.selective_subspace_update_is_suitable() {
-                    while let Some( (i, child_id) ) = grid.most_urgent_subspace_update() {   
-                        // Recursion
-                        arrange(tree, child_id, grid.get_offset_geometry(tree.get_outer_geometry(), outer_geometry, i as u16, stacked_scale), stacked_padding, stacked_scale, program);
-                    }
-                }
-                else {
-                    for (i, child_id) in grid.children_iter().enumerate() {   
-                        // Recursion
-                        arrange(tree, *child_id, grid.get_offset_geometry(tree.get_outer_geometry(), outer_geometry, i as u16, stacked_scale), stacked_padding, stacked_scale, program);
-                    }
+            LayoutElementProfile::Grid(ref mut grid) =>  { 
+                for (i, child_id) in grid.children_iter().enumerate() {   
+                    // Recursion
+                    let offset_geometry = grid.get_offset_geometry(tree.get_outer_geometry(), outer_geometry, i as u16, stacked_scale); 
+
+                    arrange(tree, *child_id, offset_geometry, stacked_padding, stacked_scale, program);
                 }
             },
             LayoutElementProfile::Padding(ref mut padding) => {
@@ -211,19 +205,71 @@ pub fn arrange(tree: &LayoutTree, outer_element_id: LayoutElemID, outer_geometry
                 *stacked_padding = None;
             },
             LayoutElementProfile::Window(ref mut window) => {
+                let visibility = match tree.outer_geometry.overlaps_geometry(outer_geometry) { 
+                    true => Visibility::Slot1,
+                    false => Visibility::Null 
+                };
+
                 if let Some(view) = window.get_view(){
-                    view.set_visibility(
-                        if tree.outer_geometry.overlaps_geometry(outer_geometry) { Visibility::Slot1 } 
-                        else { Visibility::Null }
-                    );
+                    view.set_visibility(visibility);
                 }
-            
-                window.set_desired_geometry(outer_geometry.clone());
+
+                if visibility != Visibility::Null  {
+                    window.set_desired_geometry(outer_geometry.clone());
+                }
             },
             _ => {}
         }  
     }
 }
+
+
+
+pub fn geometry_of(tree: &LayoutTree, outer_element_id: LayoutElemID, target_element_id: LayoutElemID, outer_geometry: Geometry, stacked_padding: &mut Option<u32>, stacked_scale: &mut (f32, f32)) -> Option<Geometry> {
+    if outer_element_id == target_element_id { return Some(outer_geometry); } 
+
+    if let Some(mut outer_element) = tree.lookup_element(outer_element_id){
+        match outer_element.profile{
+            LayoutElementProfile::Bisect(ref bisect) => {               
+                for (i, child_id) in bisect.children_iter().enumerate() {   
+                    // Recursion
+                    let rec = geometry_of(tree, *child_id, target_element_id, bisect.get_offset_geometry(outer_geometry, stacked_padding, i as i32), stacked_padding, stacked_scale);
+                    if rec.is_some() {
+                        return rec;
+                    }
+                }
+            },
+            LayoutElementProfile::Grid(ref mut grid) =>  { 
+                for (i, child_id) in grid.children_iter().enumerate() {   
+                    // Recursion
+                    let rec = geometry_of(tree, *child_id, target_element_id, grid.get_offset_geometry(tree.get_outer_geometry(), outer_geometry, i as u16, stacked_scale), stacked_padding, stacked_scale);
+                    if rec.is_some() {
+                        return rec;
+                    }
+                }
+            },
+            LayoutElementProfile::Padding(ref mut padding) => {
+                (*stacked_scale).0 *= padding.inner_scale_x;
+                (*stacked_scale).1 *= padding.inner_scale_y;
+                *stacked_padding = Some(padding.gap_size);
+
+                // Recursion
+                let rec = geometry_of(tree, padding.child_elem_id, target_element_id, padding.get_offset_geometry(outer_geometry, stacked_scale), stacked_padding, stacked_scale);
+                if rec.is_some() {
+                    return rec;
+                }
+
+                (*stacked_scale).0 /= if padding.inner_scale_x != 0f32 { padding.inner_scale_x } else { panic!("X-scaling can't be 0.") };
+                (*stacked_scale).0 /= if padding.inner_scale_y != 0f32 { padding.inner_scale_y } else { panic!("Y-scaling can't be 0.") };
+                *stacked_padding = None;
+            },
+            _ => {}
+        }  
+    }
+
+    return None;
+}
+
 
 pub fn find_all_windows(matches: &mut Vec<LayoutElemID>, needs_to_be_active: bool, tree: &LayoutTree, outer_element_id: LayoutElemID) {
     if let Some(ref mut outer_element) =  tree.lookup_element(outer_element_id){

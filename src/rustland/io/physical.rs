@@ -1,6 +1,8 @@
 use common::definitions::{WM_CATCH_EVENT, LEFT_CLICK, RIGHT_CLICK};
 use common::job::{JobType};
 
+use common::definitions::LayoutElemID;
+use layout::element::bisect::Orientation;
 
 use wlc::{Point, KeyState, ButtonState};
 use wlc::input::pointer;
@@ -10,7 +12,7 @@ pub struct InputDevice {
     pub left_click: ButtonState,
     pub right_click: ButtonState,
 
-    pub resizing: bool
+    pub resize: Option<(LayoutElemID, Orientation)>
 }
 
 impl InputDevice{
@@ -22,7 +24,7 @@ impl InputDevice{
             },
             left_click: ButtonState::Released,
             right_click: ButtonState::Released,
-            resizing: false
+            resize: None
         }
     }
 
@@ -34,7 +36,7 @@ impl InputDevice{
             },
             left_click: ButtonState::Released,
             right_click: ButtonState::Released,
-            resizing: false
+            resize: None
         }
     }
 

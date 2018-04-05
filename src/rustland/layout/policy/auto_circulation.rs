@@ -135,13 +135,6 @@ impl LayoutPolicy for AutoCirculation{
                         _ => ("", 0f32)
                     };
 
-                    use std::process::Command;
-                    Command::new("sh")
-                        .arg("-c")
-                        .arg("notify-send Bisect removal")
-                        .output()
-                        .expect("failed to execute process");
-
                     if property != "" { tree.animate_element_property(&mut grand_parent, property, new_value, false, time_frame); }
                 }
                 
@@ -150,7 +143,7 @@ impl LayoutPolicy for AutoCirculation{
             else{
                 // One element left in bisect - give it full space:
                 tree.animate_property(parent_ident, "ratio", 
-                    match child_side{
+                    match child_side {
                         Side::Left => 0.0,
                         Side::Right => 1.0,
                         Side::Neither => panic!()
