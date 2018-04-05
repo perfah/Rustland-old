@@ -1,15 +1,15 @@
 Rustland
 ========
 
-  Wayland compositor written in Rust.
+A [Wayland](https://wayland.freedesktop.org/) compositor for window management written in Rust.
+  
+*Sources of inspirations: [sway](http://swaywm.org/), [i3](https://i3wm.org/), [bspwm](https://github.com/baskerville/bspwm)*
 
 <img align="center" width="900" height="422" src="https://i.imgur.com/UaQbarC.gif">
 
-Inspired feature-wise by [dynamic window managers](https://en.wikipedia.org/wiki/Dynamic_window_manager) like [i3](https://i3wm.org/) and [bspwm](https://github.com/baskerville/bspwm), this project is aiming for the the same category. Unlike them however, Rustland is technically a **[Wayland](https://wayland.freedesktop.org/) compositor** rather than a traditional x11 window manager. 
+ This project is not an attempt to clone anything you have seen before but you may recognize some features such as automatic window tiling and multiple workspaces from other projects. The intention is to create a new future-proof window manager with some of the powerful features of the past.
   
- The intention is to create a future-proof window manager carrying some of the more powerful features of older projects in the category. This project is probably not aiming for exactly what you have seen before, but automatic window tiling, multiple workspaces and flexible customization are some of the goals.
-  
-  Rustland is **still in the alpha stages so it probably won't fit your needs just yet**. 
+ Although Rustland is still under development you can try it today by [building it yourself](https://github.com/perfah/Rustland/wiki#building).
 
 What is currently in the scope of this project?
 -----------------------------------------------
@@ -21,7 +21,7 @@ What is currently in the scope of this project?
  - [x] Tag system for referencing items in the layout, e.g. both '@focused' and '@firefox' references Firefox should it be the focused application in your layout
  - [x] Some network transparency (via TCP) - allows for potential interaction with the compositor from various applications/platsforms. 
  - [x] [Basic configution and customization](https://github.com/perfah/Rustland/wiki/Configuration)
- - [ ] Layout interaction: resizing windows with mouse, keyboard shortcuts..
+ - [X] Layout interaction: resizing windows with mouse, keyboard shortcuts..
  - [ ] Touchscreen support
  - [ ] "Snapshots" for saving and loading layouts (maybe)
  - [ ] Floating windows (maybe)
