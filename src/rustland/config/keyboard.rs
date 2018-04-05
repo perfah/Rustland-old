@@ -26,8 +26,12 @@ impl Default for KeyboardConfig {
             mod_key: "Logo".to_string(),
             meta_view_key: Key::Tab,
             hotkeys: [
-                (format!("Ctrl{}Space", KEY_DIVISOR), "/usr/bin/dmenu_run".to_string()),
-                (format!("Ctrl{}T", KEY_DIVISOR), "/usr/bin/terminator".to_string()),
+                (format!("Ctrl{}Space",    KEY_DIVISOR), "/usr/bin/dmenu_run".to_string()),
+                (format!("Ctrl{}T",        KEY_DIVISOR), "/usr/bin/terminator".to_string()),
+                (format!("VolumeUp"),                    "pactl set-sink-volume 0 +5%".to_string()),
+                (format!("VolumeDown"),                  "pactl set-sink-volume 0 -5%".to_string()),
+                (format!("BrightnessUp"),                "gksu brightnessctl s 50+".to_string()),
+                (format!("BrightnessDown"),              "gksu brightnessctl s 50-".to_string()),
             ].iter().cloned().collect()
         }
     }
@@ -40,7 +44,7 @@ impl KeyboardConfig {
 
     pub fn matching_hotkey(&self, mods: Flags, key: Key) -> Option<String>{        
         for (str_seq, bin) in &self.hotkeys {
-            if KeySequence::new(str_seq.clone()).matches(mods, Some(key)) {    
+            if KeySequence::new(str_seq.replace("mod", &self.mod_key)).matches(mods, Some(key)) {    
                 return Some(bin.clone());
             }
         }
