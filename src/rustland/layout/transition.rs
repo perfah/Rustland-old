@@ -1,7 +1,7 @@
 use common::definitions::{DefaultNumericType, LayoutElemID};
 use layout::LayoutTree;
 use utils::interpolation::NumericInterpolation;
-use utils::interpolation::methods::SineInterpolator;
+use utils::interpolation::methods::SigmoidInterpolator;
 
 pub struct Transition{
     pub element_id: LayoutElemID,
@@ -14,10 +14,10 @@ pub struct Transition{
 impl Transition{
     pub fn new(element_id: LayoutElemID, transitioning_property: &'static str, value_origin: DefaultNumericType, value_dest: DefaultNumericType, relative_transition: bool, time_frame_ms: u64, delay_ms: u64) -> Transition{
         let interpolation = NumericInterpolation::new(
-            box SineInterpolator{}, 
+            box SigmoidInterpolator{}, 
             value_origin, 
             if relative_transition { value_origin + value_dest} else { value_dest }, 
-            0
+            100
         );
 
         Transition{

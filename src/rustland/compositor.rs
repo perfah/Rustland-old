@@ -228,12 +228,12 @@ impl Callback for Compositor {
                         
                         if let Some(&jumper_ident) = wm_state.tree.tags.address_element_by_tag(wm_state.config.layout.jumper_tag.clone()).first() {
                             if let Some(geometry) = new_workspace_offset{
-                                wm_state.tree.animate_property(jumper_ident, "offset_x", -geometry.origin.x as f32, false, 250);
-                                wm_state.tree.animate_property(jumper_ident, "offset_y", -geometry.origin.y as f32, false, 250);
+                                wm_state.tree.animate_property(jumper_ident, "offset_x", -geometry.origin.x as f32, false, 300);
+                                wm_state.tree.animate_property(jumper_ident, "offset_y", -geometry.origin.y as f32, false, 300);
 
                                 let zoom_magnitude = (wm_state.tree.get_outer_geometry().size.w / 10) as f32;
-                                wm_state.tree.animate_property(jumper_ident, "gap_size", zoom_magnitude, false, 125);
-                                wm_state.tree.animate_property_explicitly(jumper_ident, "gap_size", zoom_magnitude, 0f32 as f32, false, 125, 126);
+                                //wm_state.tree.animate_property(jumper_ident, "gap_size", zoom_magnitude, false, 125);
+                                //wm_state.tree.animate_property_explicitly(jumper_ident, "gap_size", zoom_magnitude, 0f32 as f32, false, 125, 126);
                             }
                         }
                         if let Ok(mut pending_jobs) = PENDING_JOBS.try_lock(){

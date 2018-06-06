@@ -69,63 +69,37 @@ mod test{
     fn numeric_interpolation_test(){
         use num::abs;
         use super::NumericInterpolation;
-        use super::methods::{LinearInterpolator, QuadraticInterpolator, DecelerationInterpolator};
+        use super::methods::{SigmoidInterpolator, QuadraticInterpolator};
 
         let iterations = 100;
         let (start_pole, end_pole) = (0f32, 100f32);
 
         /*
-            Run with '--nocapture' as argument for a visual demonstration.
-            linear: l(x) = x, 
-            quad: q(x) = x*x
-            x = 1 <=> l(x) = q(x) 
+            Run 'cargo test -- --nocapture' for a visual demonstration.
         */
 
-        // Output of l(x), q(x)
-        let (mut l, mut q) = (0, 0);
-
         // Interpolation descriptions:
-        let mut linear = NumericInterpolation::new(box LinearInterpolator{}, start_pole, end_pole, iterations);
-        let mut quad = NumericInterpolation::new(box QuadraticInterpolator{}, start_pole, end_pole, iterations);
+        let mut interpolator = NumericInterpolation::new(box SigmoidInterpolator{}, start_pole, end_pole, iterations);
 
-        // On iteration num. 10 linear and quad meet: l(x) = q(x)
-        for i in 0..10{        
-            linear.next(&mut l);
-            quad.next(&mut q);
-        }
-        //assert!(abs(l - q) <= 1); // rounding error are tolerated
-
-        // Visual demonstration of l(x) and q(x):
-        linear.reset();
-        quad.reset();
+        let mut pos = 0;
         let mut current_iter = 0;
         loop {
-            let cond1 = linear.next(&mut l);
-            let cond2 = quad.next(&mut q);
-            if !(cond1 || cond2) { break; }
+            let ongoing = interpolator.next(&mut pos);
+            //let cond2 = quad.next(&mut q);
+            if !ongoing { break; }
 
             print!("it. {}: ", current_iter);
 
-            if l == q{
-                // Here once again they meet.
-                for i in 1..l { print!(" "); }
+            for i in 1..pos { print!(" "); }
                 print!("X");
-            }
-            else if l < q { 
-                for i in 1..l { print!(" "); }
-                print!("l");
 
-                for i in 1..(q-l) { print!(" "); }
-                print!("q");
-            }
-            else{
-                for i in 1..q{ print!(" "); }
-                print!("q");
 
-                for i in 1..(l-q){ print!(" "); }
-                print!("l");
+            if current_iter == iterations / 2 {
+                // Sigmoid at x=0
+                assert!(pos == end_pole as i32 / 2 );
             }
-
+            
+                
             println!();
             current_iter += 1;
         }
