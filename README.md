@@ -5,7 +5,7 @@ A [Wayland](https://wayland.freedesktop.org/) compositor for window management w
   
 *Sources of inspirations: [sway](http://swaywm.org/), [i3](https://i3wm.org/), [bspwm](https://github.com/baskerville/bspwm)*
 
-<img alt="A preview on Youtube" align="center" width="827" height="481" src="https://i.imgur.com/Ek06LG8.png">
+[<img alt="A preview on Youtube" align="center" width="827" height="481" src="https://i.imgur.com/Ek06LG8.png">](https://www.youtube.com/watch?v=C5r9Bc7rCI4)
 
  This project is not an attempt to clone anything you have seen before but you may recognize some features such as automatic window tiling and multiple workspaces from other projects. The intention is to create a new future-proof window manager with some of the powerful features of the past.
   
