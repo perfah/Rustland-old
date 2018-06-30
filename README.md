@@ -5,7 +5,7 @@ A [Wayland](https://wayland.freedesktop.org/) compositor for window management w
   
 *Sources of inspirations: [sway](http://swaywm.org/), [i3](https://i3wm.org/), [bspwm](https://github.com/baskerville/bspwm)*
 
-<img align="center" width="900" height="422" src="https://i.imgur.com/UaQbarC.gif">
+<img alt="A preview on Youtube" align="center" width="827" height="481" src="https://i.imgur.com/Ek06LG8.png">
 
  This project is not an attempt to clone anything you have seen before but you may recognize some features such as automatic window tiling and multiple workspaces from other projects. The intention is to create a new future-proof window manager with some of the powerful features of the past.
   
@@ -22,6 +22,7 @@ What is currently in the scope of this project?
  - [x] Some network transparency (via TCP) - allows for potential interaction with the compositor from various applications/platsforms. 
  - [x] [Basic configution and customization](https://github.com/perfah/Rustland/wiki/Configuration)
  - [X] Layout interaction: resizing windows with mouse, keyboard shortcuts..
+ - [ ] Window borders
  - [ ] Touchscreen support
  - [ ] "Snapshots" for saving and loading layouts (maybe)
  - [ ] Floating windows (maybe)
