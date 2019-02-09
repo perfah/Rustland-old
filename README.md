@@ -1,7 +1,7 @@
 Rustland
 ========
 
-*Late update: The reason for the lack of updates has mainly been the deprecation of WLC, the underlying backend library. Rustland may still however be rewritten for another library (perhaps [wlroots](https://github.com/swaywm/wlroots)) in the future.*
+*Late update: This version of Rustland is abandoned since the deprecation of WLC, the underlying backend library. Future updates will be made [here](https://github.com/perfah/Rustland).*
 
 A [Wayland](https://wayland.freedesktop.org/) compositor for window management written in Rust.
   
