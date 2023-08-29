@@ -1,11 +1,13 @@
-Rustland
-========
+Rustland 1.0
+============
 
 *Late update: This version of Rustland is abandoned since the deprecation of WLC, the underlying backend library. Future updates will be made [here](https://github.com/perfah/Rustland).*
 
 A [Wayland](https://wayland.freedesktop.org/) compositor for window management written in Rust.
   
 *Sources of inspirations: [sway](http://swaywm.org/), [i3](https://i3wm.org/), [bspwm](https://github.com/baskerville/bspwm)*
+
+![Alt Text](https://i.imgur.com/5xdETKS.gif)
 
 [<img alt="A preview on Youtube" align="center" width="827" height="481" src="https://i.imgur.com/Ek06LG8.png">](https://www.youtube.com/watch?v=C5r9Bc7rCI4)
 
